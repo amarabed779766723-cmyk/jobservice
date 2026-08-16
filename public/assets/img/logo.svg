@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="100" fill="#ffffff" stroke="#2563eb" stroke-width="12"/>
+  <text x="256" y="200" font-size="140" font-weight="bold" text-anchor="middle" fill="#2563eb" font-family="Arial, sans-serif">JS</text>
+  <text x="256" y="320" font-size="60" font-weight="bold" text-anchor="middle" fill="#1e40af" font-family="Arial, sans-serif">JOB</text>
+  <text x="256" y="390" font-size="60" font-weight="bold" text-anchor="middle" fill="#1e40af" font-family="Arial, sans-serif">SERVICE</text>
+</svg>

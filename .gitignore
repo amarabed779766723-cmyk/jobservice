@@ -1,0 +1,25 @@
+/node_modules
+/public/hot
+/public/storage
+/storage/*.key
+/vendor
+.env
+.env.backup
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+# User uploaded files
+/public/uploads/avatars/
+/public/uploads/covers/
+/public/uploads/posts/
+/public/uploads/chats/
+/public/uploads/chat_wallpapers/
+/public/uploads/stories/
+/public/uploads/videos/
+/public/uploads/files/
+
+# Generated / temporary files
+/storage/framework/
+/storage/logs/

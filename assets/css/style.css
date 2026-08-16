@@ -1,0 +1,347 @@
+@import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap');
+
+:root {
+    --primary: #2563eb;
+    --primary-hover: #1d4ed8;
+    --bg: #f0f2f5;
+    --bg-card: #ffffff;
+    --text: #1c1e21;
+    --text-secondary: #65676b;
+    --border: #e5e7eb;
+    --shadow: 0 1px 2px rgba(0,0,0,0.08);
+    --radius: 12px;
+    --transition: 0.2s ease;
+}
+
+[data-theme="dark"] {
+    --bg: #18191a;
+    --bg-card: #242526;
+    --text: #e4e6eb;
+    --text-secondary: #b0b3b8;
+    --border: #3e4042;
+    --shadow: 0 1px 2px rgba(255,255,255,0.05);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Tajawal', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    direction: rtl;
+    transition: background var(--transition), color var(--transition);
+}
+
+/* ========== شريط علوي ========== */
+.topbar {
+    background: var(--bg-card);
+    box-shadow: var(--shadow);
+    padding: 0 1.5rem;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid var(--border);
+}
+.topbar-left { display: flex; align-items: center; gap: 0.5rem; }
+.topbar-logo { font-size: 1.8rem; font-weight: 900; color: var(--primary); text-decoration: none; }
+.topbar-center { display: flex; gap: 0.25rem; }
+.topbar-icon {
+    width: 42px; height: 42px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; font-size: 1.3rem;
+    cursor: pointer; transition: var(--transition);
+    text-decoration: none; color: var(--text);
+}
+.topbar-icon:hover, .topbar-icon.active { background: rgba(37,99,235,0.1); color: var(--primary); }
+.topbar-right { display: flex; align-items: center; gap: 1rem; }
+.topbar-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; border: 2px solid var(--primary); }
+
+/* ========== تخطيط الصفحة الرئيسية ========== */
+.page-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 1rem;
+}
+@media (max-width: 900px) { .page-container { grid-template-columns: 1fr; } .sidebar { display: none; } }
+.page-content { padding-bottom: 80px; }
+
+/* ========== البطاقة العامة ========== */
+.card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border);
+    transition: var(--transition);
+}
+.card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+.card-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+.card-avatar { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; }
+.card-user { font-weight: 600; font-size: 0.95rem; }
+.card-meta { font-size: 0.8rem; color: var(--text-secondary); }
+.card-title { font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem; color: var(--text); text-decoration: none; }
+.card-body { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.6; margin-bottom: 0.75rem; }
+.card-footer {
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 1px solid var(--border); padding-top: 0.75rem; margin-top: 0.5rem;
+}
+.card-price { color: var(--primary); font-weight: 700; font-size: 1.1rem; }
+
+/* ========== أزرار ========== */
+.btn {
+    display: inline-block; padding: 0.6rem 1.5rem; border-radius: 2rem;
+    font-weight: 600; font-size: 0.95rem; text-decoration: none;
+    cursor: pointer; border: none; font-family: 'Tajawal', sans-serif;
+    transition: var(--transition); text-align: center;
+}
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); }
+.btn-outline { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+.btn-outline:hover { background: var(--border); }
+.btn-danger { background: #ef4444; color: white; }
+.btn-success { background: #10b981; color: white; }
+.btn-sm { padding: 0.35rem 1rem; font-size: 0.8rem; }
+
+/* ========== شريط جانبي ========== */
+.sidebar { position: sticky; top: 80px; align-self: start; }
+.sidebar-card { background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1rem; margin-bottom: 1rem; border: 1px solid var(--border); }
+.sidebar-title { font-weight: 700; margin-bottom: 0.75rem; font-size: 1rem; }
+.sidebar-item {
+    display: flex; align-items: center; gap: 0.75rem;
+    padding: 0.6rem 0.5rem; border-radius: 8px;
+    color: var(--text); text-decoration: none;
+    font-size: 0.95rem; transition: var(--transition);
+}
+.sidebar-item:hover { background: var(--bg); }
+
+/* ========== صفحات الدخول والتسجيل ========== */
+.auth-page {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; background: var(--bg); padding: 1rem;
+}
+.auth-box {
+    background: var(--bg-card); border-radius: 1.5rem;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1); padding: 2.5rem;
+    width: 100%; max-width: 440px;
+}
+.brand-logo { font-size: 2.5rem; font-weight: 900; color: var(--primary); text-align: center; }
+.brand-slogan { color: var(--text-secondary); text-align: center; margin-bottom: 2rem; }
+.input-group { margin-bottom: 1.25rem; }
+.input-group label { display: block; font-size: 0.9rem; font-weight: 500; color: var(--text); margin-bottom: 0.4rem; }
+.input-group input, .input-group textarea, .input-group select {
+    width: 100%; padding: 0.85rem 1rem; border: 1px solid var(--border);
+    border-radius: 0.75rem; font-size: 1rem; font-family: 'Tajawal', sans-serif;
+    background: var(--bg); color: var(--text);
+    transition: var(--transition); outline: none;
+}
+.input-group input:focus, .input-group textarea:focus {
+    border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+}
+.error-msg { background: #fef2f2; border: 1px solid #fecaca; color: #dc2626; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; }
+.success-msg { background: #d1fae5; border: 1px solid #a7f3d0; color: #065f46; padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem; }
+.auth-link { text-align: center; color: var(--text-secondary); margin-top: 1.5rem; }
+.auth-link a { color: var(--primary); font-weight: 600; text-decoration: none; }
+
+/* ========== اختيار نوع الحساب ========== */
+.type-selector { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
+.type-btn {
+    flex: 1; padding: 0.85rem; border: 2px solid var(--border);
+    border-radius: 0.75rem; background: var(--bg-card);
+    font-family: 'Tajawal', sans-serif; font-weight: 600;
+    cursor: pointer; transition: var(--transition); color: var(--text-secondary);
+}
+.type-btn.active { border-color: var(--primary); background: rgba(37,99,235,0.05); color: var(--primary); }
+
+/* ========== شريط التنقل السفلي ========== */
+.bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--bg-card); border-top: 1px solid var(--border);
+    display: flex; justify-content: space-around; padding: 0.75rem 0; z-index: 100;
+}
+.bottom-nav a {
+    display: flex; flex-direction: column; align-items: center; gap: 0.25rem;
+    color: var(--text-secondary); text-decoration: none; font-size: 0.75rem;
+}
+.bottom-nav a.active { color: var(--primary); }
+.nav-icon { font-size: 1.4rem; }
+
+/* ========== مفتاح التبديل ========== */
+input[type="checkbox"].switch {
+    appearance: none; width: 48px; height: 24px;
+    background: var(--border); border-radius: 24px;
+    position: relative; cursor: pointer; transition: var(--transition);
+}
+input[type="checkbox"].switch::before {
+    content: ""; position: absolute; height: 20px; width: 20px;
+    left: 2px; bottom: 2px; background: white;
+    border-radius: 50%; transition: var(--transition);
+}
+input[type="checkbox"].switch:checked { background: var(--primary); }
+input[type="checkbox"].switch:checked::before { transform: translateX(24px); }
+
+/* ========== النجوم التفاعلية ========== */
+.star-rating { display: flex; gap: 0.25rem; font-size: 2rem; cursor: pointer; }
+.star-rating span { color: #d1d5db; transition: color 0.15s; }
+.star-rating span.active { color: #fbbf24; }
+
+/* ========== Toast ========== */
+.toast {
+    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+    background: #1f2937; color: white; padding: 0.75rem 1.5rem;
+    border-radius: 2rem; z-index: 9999; opacity: 0; transition: opacity 0.3s;
+    pointer-events: none;
+}
+.toast.show { opacity: 1; }
+
+/* ========== تحسين حقول الملفات ========== */
+.file-input-wrapper {
+    position: relative;
+    overflow: hidden;
+    display: inline-block;
+    width: 100%;
+    margin-top: 0.25rem;
+}
+.file-input-wrapper input[type="file"] {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px dashed var(--border);
+    border-radius: 0.75rem;
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    transition: var(--transition);
+}
+.file-input-wrapper input[type="file"]:hover {
+    border-color: var(--primary);
+    background: rgba(37,99,235,0.02);
+}
+
+/* ========== تأثيرات متفرقة ========== */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+.card { animation: fadeIn 0.3s ease; }
+
+/* ========== لوحة تحكم الأدمن ========== */
+.admin-body { background: #f1f5f9 !important; display: flex; min-height: 100vh; }
+.admin-sidebar { width: 250px; background: #1e293b !important; color: white; padding: 1.5rem 0; position: fixed; top: 0; bottom: 0; right: 0; z-index: 50; }
+.admin-sidebar-logo { font-size: 1.4rem; font-weight: 900; color: #60a5fa; text-align: center; margin-bottom: 2rem; }
+.admin-sidebar a { color: #cbd5e1 !important; text-decoration: none; padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 0.75rem; }
+.admin-sidebar a:hover, .admin-sidebar a.active { background: #334155; color: white; }
+.admin-main { flex: 1; margin-right: 250px; padding: 2rem; background: #f1f5f9 !important; }
+.admin-header { background: white; border-radius: 12px; padding: 1rem 1.5rem; margin-bottom: 1.5rem; }
+.stat-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+.stat-card { background: white; border-radius: 12px; padding: 1.25rem; }
+.stat-card-value { font-size: 1.8rem; font-weight: 700; }
+.stat-card-label { color: #64748b; font-size: 0.85rem; }
+.admin-table { width: 100%; background: white; border-radius: 12px; overflow: hidden; border-collapse: collapse; }
+.admin-table th { background: #f8fafc; padding: 0.75rem 1rem; text-align: right; color: #64748b; }
+.admin-table td { padding: 0.75rem 1rem; border-top: 1px solid #f1f5f9; }
+.admin-table tr:hover { background: #f8fafc; }
+.admin-main .btn { padding: 0.35rem 1rem; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; font-size: 0.8rem; }
+.admin-main .btn-primary { background: #2563eb; color: white; }
+.admin-main .btn-danger { background: #ef4444; color: white; }
+.admin-main .btn-success { background: #10b981; color: white; }
+.admin-main .btn-outline { background: #e2e8f0; color: #1e293b; border: 1px solid #cbd5e1; }
+
+/* ========== الوضع الليلي الكامل ========== */
+[data-theme="dark"] body {
+    background-color: #000000 !important;
+}
+[data-theme="dark"] .topbar,
+[data-theme="dark"] .bottom-nav {
+    background-color: #000000 !important;
+    border-color: #222 !important;
+}
+[data-theme="dark"] .card,
+[data-theme="dark"] .auth-box,
+[data-theme="dark"] .sidebar-card,
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .admin-header,
+[data-theme="dark"] .admin-table,
+[data-theme="dark"] .admin-main .card {
+    background-color: #0a0a0a !important;
+    border-color: #222 !important;
+}
+[data-theme="dark"] h1, [data-theme="dark"] h2, [data-theme="dark"] h3, [data-theme="dark"] h4,
+[data-theme="dark"] h5, [data-theme="dark"] h6,
+[data-theme="dark"] p, [data-theme="dark"] span, [data-theme="dark"] label,
+[data-theme="dark"] .card-title, [data-theme="dark"] .card-user, [data-theme="dark"] .sidebar-title,
+[data-theme="dark"] .stat-card-value, [data-theme="dark"] .admin-table td,
+[data-theme="dark"] .admin-table th, [data-theme="dark"] .auth-link, [data-theme="dark"] .brand-slogan,
+[data-theme="dark"] li, [data-theme="dark"] a {
+    color: #ffffff !important;
+}
+[data-theme="dark"] .card-body, [data-theme="dark"] .card-meta, [data-theme="dark"] .text-secondary,
+[data-theme="dark"] .stat-card-label, [data-theme="dark"] .admin-table th {
+    color: #d1d5db !important;
+}
+[data-theme="dark"] .input-group input,
+[data-theme="dark"] .input-group textarea,
+[data-theme="dark"] .input-group select {
+    background-color: #0a0a0a !important;
+    color: #ffffff !important;
+    border-color: #333 !important;
+}
+[data-theme="dark"] .btn-outline {
+    background-color: #222 !important;
+    color: #ffffff !important;
+    border-color: #333 !important;
+}
+[data-theme="dark"] .btn-outline:hover {
+    background-color: #333 !important;
+}
+[data-theme="dark"] .admin-table tr:hover {
+    background-color: #1a1a1a !important;
+}
+[data-theme="dark"] .error-msg {
+    background-color: #2d0000 !important;
+    color: #ffcccc !important;
+    border-color: #660000 !important;
+}
+[data-theme="dark"] .success-msg {
+    background-color: #002d00 !important;
+    color: #ccffcc !important;
+    border-color: #006600 !important;
+}
+[data-theme="dark"] .topbar-icon:hover {
+    background-color: #1a1a1a !important;
+}
+[data-theme="dark"] .sidebar-item:hover {
+    background-color: #1a1a1a !important;
+}
+[data-theme="dark"] .type-btn {
+    background-color: #0a0a0a !important;
+    color: #d1d5db !important;
+}
+[data-theme="dark"] .type-btn.active {
+    background-color: #1a1a1a !important;
+    color: #60a5fa !important;
+    border-color: #60a5fa !important;
+}
+[data-theme="dark"] .file-input-wrapper input[type="file"] {
+    background-color: #0a0a0a !important;
+    color: #ffffff !important;
+    border-color: #333 !important;
+}
+[data-theme="dark"] .card:hover {
+    box-shadow: 0 4px 12px rgba(255,255,255,0.05) !important;
+}
+/* أزرار الراديو المخفية */
+.type-selector input[type="radio"] {
+    display: none;
+}
+.type-selector input[type="radio"]:checked + .type-btn {
+    border-color: var(--primary) !important;
+    background: rgba(37,99,235,0.05) !important;
+    color: var(--primary) !important;
+}
+.type-btn {
+    cursor: pointer;
+    text-align: center;
+}
