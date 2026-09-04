@@ -139,6 +139,59 @@ function globalSearch(query) {
     const resultsDiv = document.getElementById('searchResults');
     if (!resultsDiv) return;
     
+    // ✅ إذا كتب # فقط - عرض كل الهاشتاقات
+    if (query === '#') {
+        searchTimeout = setTimeout(() => {
+            fetch('/search?all_hashtags=1')
+                .then(res => res.json())
+                .then(data => {
+                    let html = '';
+                    
+                    if (data.hashtags && data.hashtags.length) {
+                        html += `<div style="padding:0.5rem 1rem;font-weight:700;color:#8B5CF6;font-size:0.8rem;">🏷️ الهاشتاقات</div>`;
+                        data.hashtags.forEach(h => {
+                            html += `<a href="/hashtag/${h}" style="display:block;padding:0.5rem 1rem;color:var(--text);text-decoration:none;border-bottom:1px solid var(--border);">#${h}</a>`;
+                        });
+                    }
+                    
+                    resultsDiv.innerHTML = html || '<p style="padding:1rem;">لا توجد هاشتاقات</p>';
+                    resultsDiv.style.display = 'block';
+                });
+        }, 300);
+        return;
+    }
+    
+    // ✅ إذا بدأ بـ # - بحث بالهاشتاق
+    if (query.startsWith('#')) {
+        const hashtag = query.substring(1);
+        
+        if (hashtag.length < 1) {
+            resultsDiv.style.display = 'none';
+            return;
+        }
+        
+        searchTimeout = setTimeout(() => {
+            fetch(`/search?hashtag=${encodeURIComponent(hashtag)}`)
+                .then(res => res.json())
+                .then(data => {
+                    let html = '';
+                    
+                    if (data.posts && data.posts.length) {
+                        html += `<div style="padding:0.5rem 1rem;font-weight:700;color:#8B5CF6;font-size:0.8rem;">📝 منشورات #${hashtag}</div>`;
+                        data.posts.forEach(p => {
+                            const content = p.content ? p.content.replace(/<[^>]*>/g, '').substring(0, 50) : 'منشور';
+                            html += `<a href="/post/${p.id}" style="display:block;padding:0.5rem 1rem;color:var(--text);text-decoration:none;border-bottom:1px solid var(--border);">${content}...</a>`;
+                        });
+                    }
+                    
+                    resultsDiv.innerHTML = html || '<p style="padding:1rem;">لا توجد نتائج</p>';
+                    resultsDiv.style.display = 'block';
+                });
+        }, 300);
+        return;
+    }
+    
+    // ✅ البحث العادي
     if (query.length < 2) {
         resultsDiv.style.display = 'none';
         return;
@@ -150,7 +203,6 @@ function globalSearch(query) {
             .then(data => {
                 let html = '';
                 
-                // ✅ مقدمي الخدمات مع خدماتهم
                 if (data.users && data.users.length) {
                     html += `<div style="padding:0.5rem 1rem;font-weight:700;color:var(--primary);font-size:0.8rem;">👤 مقدمي الخدمات</div>`;
                     data.users.forEach(u => {
@@ -160,57 +212,32 @@ function globalSearch(query) {
                         html += `<a href="/profile/${u.id}" style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 1rem;color:var(--text);text-decoration:none;border-bottom:1px solid var(--border);">
                             <img src="/uploads/avatars/${u.avatar || 'default-avatar.png'}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
                             <div style="flex:1;">
-                                <div style="font-weight:600;">${u.name} ${u.user_type === 'provider' ? '<span style="color:#10B981;">⚡ مقدم خدمة</span>' : ''}</div>
-                                ${services ? `<div style="font-size:0.75rem;color:var(--text-secondary);">🛠️ ${services}</div>` : ''}
+                                <div style="font-weight:600;">${u.name}</div>
                             </div>
                         </a>`;
                     });
                 }
                 
-                // ✅ الخدمات مع أسماء مقدميها
                 if (data.services && data.services.length) {
-                    html += `<div style="padding:0.5rem 1rem;font-weight:700;color:var(--secondary);font-size:0.8rem;">🛠️ خدمات</div>`;
+                    html += `<div style="padding:0.5rem 1rem;font-weight:700;color:#10B981;font-size:0.8rem;">🛠️ خدمات</div>`;
                     data.services.forEach(s => {
-                        const providerName = s.provider ? s.provider.name : 'غير معروف';
-                        html += `<a href="/service/${s.id}" style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 1rem;color:var(--text);text-decoration:none;border-bottom:1px solid var(--border);">
-                            <div style="flex:1;">
-                                <div style="font-weight:600;">${s.title}</div>
-                                <div style="font-size:0.75rem;color:var(--text-secondary);">👤 ${providerName} · 💰 ${s.price} ر.س</div>
-                            </div>
-                        </a>`;
+                        html += `<a href="/service/${s.id}" style="display:block;padding:0.5rem 1rem;color:var(--text);text-decoration:none;border-bottom:1px solid var(--border);">${s.title}</a>`;
                     });
                 }
                 
-                // ✅ الطلبات
-                if (data.requests && data.requests.length) {
-                    html += `<div style="padding:0.5rem 1rem;font-weight:700;color:var(--warning);font-size:0.8rem;">📋 طلبات</div>`;
-                    data.requests.forEach(r => {
-                        const userName = r.user ? r.user.name : 'عميل';
-                        html += `<a href="/request/${r.id}" style="display:flex;align-items:center;gap:0.75rem;padding:0.5rem 1rem;color:var(--text);text-decoration:none;border-bottom:1px solid var(--border);">
-                            <div style="flex:1;">
-                                <div style="font-weight:600;">${r.title}</div>
-                                <div style="font-size:0.75rem;color:var(--text-secondary);">👤 ${userName} · 💰 ${r.budget} ر.س</div>
-                            </div>
-                        </a>`;
+                if (data.posts && data.posts.length) {
+                    html += `<div style="padding:0.5rem 1rem;font-weight:700;color:#8B5CF6;font-size:0.8rem;">📝 المنشورات</div>`;
+                    data.posts.forEach(p => {
+                        const content = p.content ? p.content.substring(0, 50) : 'منشور';
+                        html += `<a href="/post/${p.id}" style="display:block;padding:0.5rem 1rem;color:var(--text);text-decoration:none;border-bottom:1px solid var(--border);">${content}...</a>`;
                     });
                 }
                 
-                resultsDiv.innerHTML = html || '<p style="padding:1rem;color:var(--text-secondary);">لا توجد نتائج</p>';
-                resultsDiv.style.display = 'block';
-            })
-            .catch(() => {
-                resultsDiv.innerHTML = '<p style="padding:1rem;color:var(--text-secondary);">حدث خطأ في البحث</p>';
+                resultsDiv.innerHTML = html || '<p style="padding:1rem;">لا توجد نتائج</p>';
                 resultsDiv.style.display = 'block';
             });
     }, 300);
 }
-// إغلاق البحث عند النقر خارجه
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('.search-advanced')) {
-        const resultsDiv = document.getElementById('searchResults');
-        if (resultsDiv) resultsDiv.style.display = 'none';
-    }
-});
 
 // ==================== الإعجابات (API) ====================
 function toggleLike(postId, btn) {
@@ -906,3 +933,85 @@ function showReplyForm(event, postId, commentId, commentUser) {
         }
     }
 }
+// ==================== صوت الإشعارات ====================
+let notificationSound = null;
+
+function initNotificationSound() {
+    notificationSound = new Audio('/assets/sounds/notification.wav');
+    notificationSound.volume = 0.7;
+}
+
+function playNotificationSound() {
+    try {
+        if (!notificationSound) {
+            initNotificationSound();
+        }
+        notificationSound.currentTime = 0;
+        notificationSound.play().catch(function() {});
+    } catch (e) {}
+}
+
+let lastUnreadCount = 0;
+let firstCheck = true;
+
+function checkNewNotifications() {
+    fetch('/api/notifications/unread-count')
+        .then(function(r) { return r.json(); })
+        .then(function(data) {
+            console.log('📋 الإشعارات:', data.unread, '| السابقة:', lastUnreadCount);
+            
+            // ✅ أول فحص - لا تشغل صوت
+            if (firstCheck) {
+                lastUnreadCount = data.unread;
+                firstCheck = false;
+                return;
+            }
+            
+            // ✅ إذا زاد العدد - شغل الصوت
+            if (data.unread > lastUnreadCount) {
+                playNotificationSound();
+                console.log('🔔 إشعار جديد!');
+            }
+            
+            lastUnreadCount = data.unread;
+        })
+        .catch(function(e) {
+            console.log('❌ خطأ:', e);
+        });
+}
+
+setInterval(checkNewNotifications, 3000);
+
+// ==================== أزرار المتابعة الفورية ====================
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.follow-action-btn, .unfollow-btn').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            var userId = this.getAttribute('data-user-id');
+            var self = this;
+            
+            fetch('/follow/' + userId, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                }
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.success) {
+                    if (data.isFollowing) {
+                        self.textContent = '✓ متابَع';
+                        self.style.background = '#374151';
+                        self.style.color = 'white';
+                    } else {
+                        self.textContent = '+ متابعة';
+                        self.style.background = '#2563eb';
+                        self.style.color = 'white';
+                    }
+                    showToast2026(data.isFollowing ? 'تم المتابعة ✅' : 'تم إلغاء المتابعة', 'success');
+                }
+            });
+        });
+    });
+});

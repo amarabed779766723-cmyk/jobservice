@@ -13,7 +13,6 @@ class UserPackage extends Model
         'start_date', 
         'end_date', 
         'status',
-        'price_paid',
         'created_at'
     ];
     

@@ -3,7 +3,7 @@
 @section('content')
 <div class="auth-page">
     <div class="auth-box" style="max-width: 480px;">
-        <div class="brand-logo">Job Service</div>
+       <img src="{{ asset('assets/branding/logo-full.png') }}" alt="JOB SERVICE" class="branding-logo auth">
         <div class="brand-slogan">أهلاً بعودتك</div>
 
         {{-- رسالة الحظر --}}

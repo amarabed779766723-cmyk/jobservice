@@ -9,22 +9,19 @@
 </head>
 <body>
     <header class="admin-topbar">
-        <div class="topbar-title">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle; margin-left:8px;"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            لوحة التحكم
+        <div class="topbar-title" style="display:flex; align-items:center;">
+            <a href="{{ route('admin.dashboard') }}" style="display:flex; align-items:center; text-decoration:none;">
+              
+                    
+            </a>
         </div>
         <div class="topbar-actions">
             <span style="font-size:0.8rem;opacity:0.7;">{{ date('Y/m/d') }}</span>
             
-            <a href="{{ route('admin.revenue') }}" class="topbar-btn" style="text-decoration:none;display:flex;align-items:center;gap:6px;color:var(--text);" title="الإيرادات">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                <span style="font-weight:700;color:#10B981;" id="topbarRevenue">
-                    {{ number_format(
-                        \App\Models\UserPackage::where('price_paid', '>', 0)->sum('price_paid')
-                        + \App\Models\Story::where('is_ad', 1)->where('status', 'approved')->sum('ad_price')
-                        + \App\Models\Offer::where('status', 'accepted')->sum('price')
-                    , 0) }} ر.س
-                </span>
+            {{-- المعاملات المالية --}}
+            <a href="{{ route('admin.transactions') }}" class="topbar-btn" style="text-decoration:none;display:flex;align-items:center;gap:6px;color:var(--text);" title="المعاملات المالية">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#C9A24B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+                <span style="font-weight:700;color:#C9A24B;">💳 المعاملات</span>
             </a>
             
             <button class="topbar-btn" onclick="toggleAdminNotifs()" style="position:relative;background:var(--bg);border:none;color:var(--text);width:36px;height:36px;border-radius:8px;cursor:pointer;">
@@ -33,7 +30,7 @@
                 <div id="adminNotifDropdown" class="notif-dropdown"></div>
             </button>
             
-            <img src="{{ asset('uploads/avatars/' . (Auth::guard('admin')->user()->avatar ?? 'default-avatar.png')) }}" style="width:34px;height:34px;border-radius:50%;border:2px solid var(--primary);">
+            <img src="{{ asset('uploads/avatars/' . (Auth::guard('admin')->user()->avatar ?? 'default-avatar.png')) }}" style="width:34px;height:34px;border-radius:50%;border:2px solid #C9A24B;">
             <span style="font-size:0.9rem;">{{ Auth::guard('admin')->user()->name ?? 'أدمن' }}</span>
         </div>
     </header>
@@ -46,15 +43,6 @@
     function markNotifRead(id){fetch(`/admin/notifications/${id}/read`,{method:'POST',headers:{'X-CSRF-TOKEN':document.querySelector('meta[name="csrf-token"]').getAttribute('content')}}).then(()=>loadAdminNotifs());}
     document.addEventListener('click',function(e){if(!e.target.closest('.topbar-btn'))document.getElementById('adminNotifDropdown').style.display='none';});
     setInterval(loadAdminNotifs,30000);loadAdminNotifs();
-
-    function updateTopbarRevenue() {
-        fetch('{{ route("admin.dashboard") }}').then(r => r.text()).then(html => {
-            let doc = new DOMParser().parseFromString(html, 'text/html');
-            let totalEl = doc.getElementById('totalRevenue');
-            if (totalEl) document.getElementById('topbarRevenue').textContent = totalEl.textContent;
-        });
-    }
-    setInterval(updateTopbarRevenue, 10000);
     </script>
 </body>
 </html>

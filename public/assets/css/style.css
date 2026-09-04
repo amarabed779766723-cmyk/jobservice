@@ -1,21 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap');
 
 :root {
-    --primary: #4F46E5;
-    --primary-hover: #4338CA;
-    --primary-light: #EEF2FF;
-    --secondary: #0D9488;
-    --warning: #F59E0B;
+    --primary: #1E2A4A;        /* كحلي Navy */
+    --primary-hover: #152038;  /* كحلي غامق */
+    --primary-light: #E8ECF4;  /* كحلي فاتح */
+    --secondary: #C9A24B;      /* ذهبي Gold */
+    --warning: #D4AF37;        /* ذهبي فاتح */
     --danger: #EF4444;
-    --bg: #F8FAFC;
+    --bg: #FFFFFF;             /* أبيض */
     --bg-card: #FFFFFF;
-    --text: #0F172A;
-    --text-secondary: #64748B;
+    --text: #1E2A4A;           /* كحلي */
+    --text-secondary: #5A6B8A;
     --border: #E2E8F0;
-    --shadow: 0 10px 30px rgba(15,23,42,0.08);
-    --radius: 18px;
-    --radius-sm: 12px;
-    --transition: 0.25s ease;
 }
 
 [data-theme="dark"] {
@@ -528,6 +524,7 @@ body {
     display: flex; justify-content: center; gap: 1.5rem;
     margin-bottom: 1.5rem; flex-wrap: wrap;
 }
+
 .stat-item { text-align: center; cursor: pointer; }
 .stat-item strong { font-size: 1.3rem; }
 .section-title { font-weight: 700; margin-bottom: 1rem; margin-top: 1.5rem; }
@@ -588,11 +585,18 @@ body {
 /* ========== القائمة المنسدلة ========== */
 .profile-menu-wrapper { position: relative; }
 .profile-dropdown {
-    position: absolute; top: 100%; left: 0; margin-top: 0.5rem;
-    background: var(--bg-card); border-radius: 12px;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 0.5rem;
+    background: var(--bg-card);
+    border-radius: 12px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-    min-width: 220px; z-index: 300; border: 1px solid var(--border);
-    overflow: hidden;
+    min-width: 220px;
+    z-index: 300;
+    border: 1px solid var(--border);
+    max-height: 400px;
+    overflow-y: auto;
 }
 .dropdown-header {
     display: flex; align-items: center; gap: 0.75rem; padding: 1rem;
@@ -698,15 +702,23 @@ body {
     cursor: pointer; font-size: 1.1rem; position: relative;
 }
 .admin-footer {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    background: var(--bg-card); border-top: 1px solid var(--border);
-    text-align: center; padding: 0.75rem;
-    color: var(--text-secondary); font-size: 0.8rem; z-index: 100;
+    position: fixed; 
+    bottom: 0;
+    left: 0;
+     right: 0;
+    background: var(--bg-card); 
+    border-top: 1px solid var(--border);
+    text-align: center; 
+    padding: 0.75rem;
+    color: var(--text-secondary);
+     font-size: 0.8rem; 
+     z-index: 100;
 }
 .admin-sidebar {
     width: 250px; color: var(--text) !important; padding: 0;
     position: fixed; top: 56px !important; bottom: 45px !important;
-    right: 0; z-index: 50; overflow-y: auto;
+    right: 0; z-index: 50;
+  
     background: #1E293B !important;
     box-shadow: 2px 0 15px rgba(0,0,0,0.04) !important;
     border-left: 1px solid var(--border);
@@ -2935,4 +2947,239 @@ html[dir="ltr"] .service-card-new .service-img .fav-btn { left: auto; right: 10p
     color: #10B981;
     font-weight: 600;
     margin-bottom: 0.5rem;
+}
+/* ===== صفحة تعيين كلمة المرور ===== */
+.reset-password-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #1e293b 0%, #1e40af 50%, #1e293b 100%);
+    direction: rtl;
+    padding: 1rem;
+}
+
+.reset-password-container {
+    background: white;
+    border-radius: 24px;
+    box-shadow: 0 25px 60px rgba(0,0,0,0.3);
+    padding: 3rem 2.5rem;
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+}
+
+.reset-password-logo {
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, #2563eb, #1e40af);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 2rem;
+    color: white;
+}
+
+.reset-password-title {
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.reset-password-subtitle {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin-bottom: 2rem;
+}
+
+.reset-password-form .form-group {
+    margin-bottom: 1.25rem;
+    text-align: right;
+}
+
+.reset-password-form .form-group label {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 0.4rem;
+}
+
+.reset-password-form .form-group input {
+    width: 100%;
+    padding: 0.9rem 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: 'Tajawal', sans-serif;
+    transition: 0.3s;
+    outline: none;
+    background: #f9fafb;
+}
+
+.reset-password-form .form-group input:focus {
+    border-color: #2563eb;
+    background: white;
+}
+
+.reset-password-btn {
+    width: 100%;
+    padding: 0.9rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Tajawal', sans-serif;
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white;
+    margin-top: 0.5rem;
+}
+
+/* ===== حقول الكود التلقائية ===== */
+.code-inputs-container {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    direction: ltr;
+}
+
+.code-input {
+    width: 45px;
+    height: 50px;
+    text-align: center;
+    font-size: 1.5rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-family: 'Tajawal', sans-serif;
+    transition: 0.3s;
+    outline: none;
+}
+
+.code-input:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37,99,235,0.1);
+}
+/* ===== حركة نبض للشعار ===== */
+@keyframes logoPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.logo-header, .logo-admin, .logo-auth {
+    animation: logoPulse 3s ease infinite;
+}
+
+/* ===== توهج للشعار ===== */
+@keyframes logoGlow {
+    0% { filter: drop-shadow(0 0 5px rgba(201,162,75,0.3)); }
+    50% { filter: drop-shadow(0 0 20px rgba(201,162,75,0.6)); }
+    100% { filter: drop-shadow(0 0 5px rgba(201,162,75,0.3)); }
+}
+
+.logo-header:hover, .logo-admin:hover {
+    animation: logoGlow 2s ease infinite;
+}
+/* ===== تنسيق الشعار ===== */
+.branding-logo {
+    display: block;
+    margin: 0 auto 1.5rem;
+    height: 80px;
+    width: auto;
+}
+
+.branding-logo.sidebar {
+    height: 70px;
+    margin: 0 auto;
+}
+
+.branding-logo.admin-header {
+    height: 65px;
+    margin: 0;
+}
+
+.branding-logo.auth {
+    height: 90px;
+    margin: 0 auto 2rem;
+}
+
+.branding-logo-small {
+    height: 50px;
+    width: auto;
+    display: block;
+    margin: 0 auto;
+}
+/* ===== صفحة الهاشتاق ===== */
+.hashtag-page {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem;
+}
+
+.hashtag-title {
+    margin-bottom: 0.5rem;
+    color: var(--text);
+    font-weight: 900;
+}
+
+.hashtag-count {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+}
+
+.hashtag-post-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border);
+}
+
+.hashtag-post-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.hashtag-post-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.hashtag-post-user {
+    font-weight: 600;
+}
+
+.hashtag-post-time {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.hashtag-post-content {
+    color: var(--text);
+    line-height: 1.6;
+}
+
+.hashtag-post-image {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-top: 0.5rem;
+}
+
+.hashtag-post-link {
+    display: inline-block;
+    margin-top: 0.5rem;
+    color: #2563EB;
+    text-decoration: none;
+    font-weight: 600;
 }

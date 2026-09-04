@@ -69,30 +69,42 @@
         </div>
     </div>
 
-    {{-- الباقة الحالية --}}
-    @php
-        $activePackage = \App\Models\UserPackage::where('user_id', $profileUser->id)
-            ->where('status', 'active')
-            ->with('package')
-            ->first();
-    @endphp
-    @if($activePackage)
-    <div class="card" style="background: linear-gradient(135deg, #eff6ff, #dbeafe); border: 2px solid #93c5fd; margin-bottom: 1rem;">
-        <div style="display: flex; align-items: center; gap: 0.75rem;">
-            <span style="font-size: 2rem;">{{ $activePackage->package->badge ?? '📦' }}</span>
-            <div>
-                <strong style="font-size: 1.1rem;">{{ $activePackage->package->name }}</strong>
-                <p style="color: var(--text-secondary); font-size: 0.85rem;">
-                    {{ __('Ends') }}: {{ \Carbon\Carbon::parse($activePackage->end_date)->format('Y/m/d') }}
-                    ({{ \Carbon\Carbon::parse($activePackage->end_date)->diffForHumans() }})
-                </p>
+    {{-- ✅ الباقة الحالية - تظهر دائماً لصاحب الحساب --}}
+    @auth
+    @if(auth()->id() == $profileUser->id)
+    <div class="card" style="margin-bottom: 1rem;">
+        @php
+            $activePackage = \App\Models\UserPackage::where('user_id', $profileUser->id)
+                ->where('status', 'active')
+                ->with('package')
+                ->first();
+        @endphp
+        
+        @if($activePackage)
+            <div style="display: flex; align-items: center; gap: 0.75rem; background: linear-gradient(135deg, #eff6ff, #dbeafe); padding: 1rem; border-radius: 12px; border: 2px solid #93c5fd;">
+                <span style="font-size: 2rem;">{{ $activePackage->package->badge ?? '📦' }}</span>
+                <div>
+                    <strong style="font-size: 1.1rem;">{{ $activePackage->package->name }}</strong>
+                    <p style="color: var(--text-secondary); font-size: 0.85rem;">
+                        {{ __('Ends') }}: {{ \Carbon\Carbon::parse($activePackage->end_date)->format('Y/m/d') }}
+                        ({{ \Carbon\Carbon::parse($activePackage->end_date)->diffForHumans() }})
+                    </p>
+                </div>
+                <a href="{{ route('packages') }}" class="btn btn-primary btn-sm" style="margin-right: auto;">🔄 {{ __('Upgrade') }}</a>
             </div>
-            @if(auth()->id() == $profileUser->id)
-            <a href="{{ route('packages') }}" class="btn btn-primary btn-sm" style="margin-right: auto;">🔄 {{ __('Upgrade') }}</a>
-            @endif
-        </div>
+        @else
+            <div style="display: flex; align-items: center; gap: 0.75rem; background: #fef3c7; padding: 1rem; border-radius: 12px; border: 2px solid #fde047;">
+                <span style="font-size: 2rem;">⚠️</span>
+                <div>
+                    <strong style="font-size: 1rem;">لا توجد باقة نشطة</strong>
+                    <p style="color: var(--text-secondary); font-size: 0.85rem;">قم بترقية باقتك للاستفادة من الميزات</p>
+                </div>
+                <a href="{{ route('packages') }}" class="btn btn-primary btn-sm" style="margin-right: auto;">💎 ترقية الباقة</a>
+            </div>
+        @endif
     </div>
     @endif
+    @endauth
 
     {{-- الإحصائيات --}}
     <div class="profile-stats">
@@ -136,7 +148,7 @@
             <a href="{{ route('service.show', $service->id) }}" class="service-item">
                 <div><strong>{{ $service->title }}</strong>
                 @if($service->description)<p>{{ Str::limit($service->description, 60) }}</p>@endif</div>
-                <span class="service-price">{{ number_format($service->price, 2) }} ر.س</span>
+                <span class="service-price">{{ number_format($service->price, 2) }} ر.ي</span>
             </a>
         @endforeach
     @endif
@@ -181,7 +193,5 @@
         <div id="listModalContent"></div>
     </div>
 </div>
-
-
 
 @endsection

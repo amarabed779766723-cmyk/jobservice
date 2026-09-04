@@ -79,9 +79,23 @@ class PostController extends Controller
         return redirect()->route('home')->with('success', 'تم نشر المنشور!');
     }
 
+    // ✅ دالة تحويل الهاشتاقات - تدعم العربية
+    public static function convertHashtags($text)
+    {
+        if (!$text) return '';
+        return preg_replace(
+            '/#([\p{Arabic}a-zA-Z0-9_]+)/u',
+            '<a href="/hashtag/$1" style="color:#2563EB; text-decoration:none; font-weight:600;">#$1</a>',
+            $text
+        );
+    }
+
     public function show($id)
     {
         $post = Post::with('user')->withCount(['likes', 'comments'])->findOrFail($id);
+        
+        
+        
         $comments = Comment::where('post_id', $id)
             ->whereNull('parent_id')
             ->with('user')

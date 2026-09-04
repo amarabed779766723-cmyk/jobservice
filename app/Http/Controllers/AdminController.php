@@ -50,11 +50,12 @@ class AdminController extends Controller
         $latestUsers = User::latest()->take(5)->get();
         $latestActivities = \App\Models\ActivityLog::with('user')->latest()->take(10)->get();
 
-        $totalRevenue = \App\Models\UserPackage::where('price_paid', '>', 0)->sum('price_paid')
+        // ✅ تعديل: حساب الإيرادات من المعاملات المؤكدة
+        $totalRevenue = \App\Models\Transaction::where('status', 'confirmed')->sum('amount')
                       + \App\Models\Story::where('is_ad', 1)->where('status', 'approved')->sum('ad_price')
                       + \App\Models\Offer::where('status', 'accepted')->sum('price');
 
-        $todayRevenue = \App\Models\UserPackage::where('price_paid', '>', 0)->whereDate('created_at', today())->sum('price_paid')
+        $todayRevenue = \App\Models\Transaction::where('status', 'confirmed')->whereDate('confirmed_at', today())->sum('amount')
                       + \App\Models\Story::where('is_ad', 1)->where('status', 'approved')->whereDate('created_at', today())->sum('ad_price')
                       + \App\Models\Offer::where('status', 'accepted')->whereDate('created_at', today())->sum('price');
         
@@ -502,41 +503,195 @@ public function resetPassword(Request $request)
     }
 
     public function revenue()
-{
-    $packageQuery = \App\Models\UserPackage::where('price_paid', '>', 0);
+    {
+        // ✅ حساب الباقات من المعاملات المؤكدة
+        $packageQuery = \App\Models\Transaction::where('status', 'confirmed')->where('type', 'package');
+        
+        $todayPackages = (clone $packageQuery)->whereDate('confirmed_at', today())->sum('amount');
+        $weekPackages = (clone $packageQuery)->whereBetween('confirmed_at', [now()->startOfWeek(), now()->endOfWeek()])->sum('amount');
+        $monthPackages = (clone $packageQuery)->whereMonth('confirmed_at', now()->month)->whereYear('confirmed_at', now()->year)->sum('amount');
+        $yearPackages = (clone $packageQuery)->whereYear('confirmed_at', now()->year)->sum('amount');
+        $totalPackages = (clone $packageQuery)->sum('amount');
+
+        // الإعلانات
+        $todayAds = \App\Models\Story::where('is_ad', 1)->where('status', 'approved')->whereDate('created_at', today())->sum('ad_price');
+        $weekAds = \App\Models\Story::where('is_ad', 1)->where('status', 'approved')->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->sum('ad_price');
+        $monthAds = \App\Models\Story::where('is_ad', 1)->where('status', 'approved')->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->sum('ad_price');
+        $yearAds = \App\Models\Story::where('is_ad', 1)->where('status', 'approved')->whereYear('created_at', now()->year)->sum('ad_price');
+        $totalAds = \App\Models\Story::where('is_ad', 1)->where('status', 'approved')->sum('ad_price');
+
+        // الخدمات
+        $todayServices = \App\Models\Offer::where('status', 'accepted')->whereDate('created_at', today())->sum('price');
+        $weekServices = \App\Models\Offer::where('status', 'accepted')->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->sum('price');
+        $monthServices = \App\Models\Offer::where('status', 'accepted')->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->sum('price');
+        $yearServices = \App\Models\Offer::where('status', 'accepted')->whereYear('created_at', now()->year)->sum('price');
+        $totalServices = \App\Models\Offer::where('status', 'accepted')->sum('price');
+
+        // المجموع
+        $todayRevenue = $todayPackages + $todayAds + $todayServices;
+        $weekRevenue = $weekPackages + $weekAds + $weekServices;
+        $monthRevenue = $monthPackages + $monthAds + $monthServices;
+        $yearRevenue = $yearPackages + $yearAds + $yearServices;
+        $totalRevenue = $totalPackages + $totalAds + $totalServices;
+
+        return view('admin.revenue', compact(
+            'todayRevenue', 'weekRevenue', 'monthRevenue', 'yearRevenue', 'totalRevenue',
+            'todayPackages', 'todayAds', 'todayServices',
+            'weekPackages', 'weekAds', 'weekServices',
+            'monthPackages', 'monthAds', 'monthServices',
+            'yearPackages', 'yearAds', 'yearServices',
+            'totalPackages', 'totalAds', 'totalServices'
+        ));
+    }
     
-    $todayPackages = (clone $packageQuery)->whereDate('created_at', today())->sum('price_paid');
-    $weekPackages = (clone $packageQuery)->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->sum('price_paid');
-    $monthPackages = (clone $packageQuery)->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->sum('price_paid');
-    $yearPackages = (clone $packageQuery)->whereYear('created_at', now()->year)->sum('price_paid');
-    $totalPackages = (clone $packageQuery)->sum('price_paid');
+    // ✅ عرض المعاملات
+    public function transactions()
+    {
+        $transactions = \App\Models\Transaction::with(['user', 'package'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+        
+        $pendingCount = \App\Models\Transaction::where('status', 'pending')->count();
+        $confirmedCount = \App\Models\Transaction::where('status', 'confirmed')->count();
+        $rejectedCount = \App\Models\Transaction::where('status', 'rejected')->count();
+        $totalConfirmed = \App\Models\Transaction::where('status', 'confirmed')->sum('amount');
+        
+        return view('admin.transactions', compact(
+            'transactions', 'pendingCount', 'confirmedCount', 'rejectedCount', 'totalConfirmed'
+        ));
+    }
 
-    $todayAds = \App\Models\Story::where('is_ad', 1)->where('status', 'approved')->whereDate('created_at', today())->sum('ad_price');
-    $weekAds = \App\Models\Story::where('is_ad', 1)->where('status', 'approved')->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->sum('ad_price');
-    $monthAds = \App\Models\Story::where('is_ad', 1)->where('status', 'approved')->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->sum('ad_price');
-    $yearAds = \App\Models\Story::where('is_ad', 1)->where('status', 'approved')->whereYear('created_at', now()->year)->sum('ad_price');
-    $totalAds = \App\Models\Story::where('is_ad', 1)->where('status', 'approved')->sum('ad_price');
-
-    $todayServices = \App\Models\Offer::where('status', 'accepted')->whereDate('created_at', today())->sum('price');
-    $weekServices = \App\Models\Offer::where('status', 'accepted')->whereBetween('created_at', [now()->startOfWeek(), now()->endOfWeek()])->sum('price');
-    $monthServices = \App\Models\Offer::where('status', 'accepted')->whereMonth('created_at', now()->month)->whereYear('created_at', now()->year)->sum('price');
-    $yearServices = \App\Models\Offer::where('status', 'accepted')->whereYear('created_at', now()->year)->sum('price');
-    $totalServices = \App\Models\Offer::where('status', 'accepted')->sum('price');
-
-    $todayRevenue = $todayPackages + $todayAds + $todayServices;
-    $weekRevenue = $weekPackages + $weekAds + $weekServices;
-    $monthRevenue = $monthPackages + $monthAds + $monthServices;
-    $yearRevenue = $yearPackages + $yearAds + $yearServices;
-    $totalRevenue = $totalPackages + $totalAds + $totalServices;
-
-    return view('admin.revenue', compact(
-        'todayRevenue', 'weekRevenue', 'monthRevenue', 'yearRevenue', 'totalRevenue',
-        'todayPackages', 'todayAds', 'todayServices',
-        'weekPackages', 'weekAds', 'weekServices',
-        'monthPackages', 'monthAds', 'monthServices',
-        'yearPackages', 'yearAds', 'yearServices',
-        'totalPackages', 'totalAds', 'totalServices'
-    ));
+    // ✅ تأكيد الدفع
+    // ✅ تأكيد الدفع
+public function confirmTransaction($id)
+{
+    $transaction = \App\Models\Transaction::findOrFail($id);
+    
+    if ($transaction->status !== 'pending') {
+        return back()->with('error', '⚠️ هذه المعاملة تمت معالجتها مسبقاً');
+    }
+    
+    $transaction->update([
+        'status' => 'confirmed',
+        'confirmed_by' => Auth::guard('admin')->id(),
+        'confirmed_at' => now(),
+    ]);
+    
+    // تفعيل الباقة تلقائياً
+    if ($transaction->type === 'package' && $transaction->package_id) {
+        $package = \App\Models\Package::find($transaction->package_id);
+        
+        // تعطيل الباقات القديمة
+        \App\Models\UserPackage::where('user_id', $transaction->user_id)->update(['status' => 'expired']);
+        
+        // تفعيل الباقة الجديدة - بدون price_paid
+        \App\Models\UserPackage::create([
+            'user_id' => $transaction->user_id,
+            'package_id' => $transaction->package_id,
+            'start_date' => now(),
+            'end_date' => now()->addDays($package->duration_days),
+            'status' => 'active',
+            'created_at' => now(),
+        ]);
+    }
+    
+    // ✅ تفعيل الإعلان تلقائياً
+    if ($transaction->type === 'ad') {
+        \App\Models\Story::where('user_id', $transaction->user_id)
+            ->where('is_ad', 1)
+            ->where('status', 'pending')
+            ->latest()
+            ->first()
+            ->update(['status' => 'approved']);
+    }
+    
+    // إشعار للمستخدم
+    \App\Models\Notification::create([
+        'user_id' => $transaction->user_id,
+        'sender_id' => Auth::guard('admin')->id(),
+        'type' => 'payment_confirmed',
+        'message' => '✅ تم تأكيد الدفع وتفعيل باقتك بنجاح!',
+        'link' => route('packages'),
+    ]);
+    
+    ActivityLogController::log($transaction->user_id, 'payment_confirmed', 'تأكيد دفع: ' . $transaction->amount . ' ر.ي');
+    
+    return back()->with('success', '✅ تم تأكيد الدفع وتفعيل الباقة');
 }
 
+    // ✅ رفض الدفع
+    public function rejectTransaction($id, Request $request)
+    {
+        $transaction = \App\Models\Transaction::findOrFail($id);
+        
+        $transaction->update([
+            'status' => 'rejected',
+            'admin_note' => $request->note ?? 'تم رفض الدفع',
+            'confirmed_by' => Auth::guard('admin')->id(),
+            'confirmed_at' => now(),
+        ]);
+        
+        // إشعار للمستخدم
+        \App\Models\Notification::create([
+            'user_id' => $transaction->user_id,
+            'sender_id' => Auth::guard('admin')->id(),
+            'type' => 'payment_rejected',
+            'message' => '❌ تم رفض الدفع. السبب: ' . ($request->note ?? 'غير محدد'),
+            'link' => route('packages'),
+        ]);
+        
+        return back()->with('success', 'تم رفض الدفع');
+    }
+    // ✅ عرض التوثيقات
+public function verifications()
+{
+    $verifications = \App\Models\UserVerification::with('user')
+        ->orderBy('created_at', 'desc')
+        ->get();
+    
+    return view('admin.verifications', compact('verifications'));
+}
+
+// ✅ قبول التوثيق
+public function approveVerification($id)
+{
+    $verification = \App\Models\UserVerification::findOrFail($id);
+    $verification->update([
+        'status' => 'approved',
+        'verified_by' => Auth::guard('admin')->id(),
+        'verified_at' => now(),
+    ]);
+    
+    \App\Models\Notification::create([
+        'user_id' => $verification->user_id,
+        'sender_id' => Auth::guard('admin')->id(),
+        'type' => 'verification_approved',
+        'message' => '✅ تم توثيق حسابك بنجاح!',
+        'link' => route('profile'),
+    ]);
+    
+    return back()->with('success', '✅ تم قبول التوثيق');
+}
+
+// ✅ رفض التوثيق
+public function rejectVerification($id, Request $request)
+{
+    $verification = \App\Models\UserVerification::findOrFail($id);
+    $verification->update([
+        'status' => 'rejected',
+        'admin_note' => $request->note ?? 'تم الرفض',
+        'verified_by' => Auth::guard('admin')->id(),
+        'verified_at' => now(),
+    ]);
+    
+    \App\Models\Notification::create([
+        'user_id' => $verification->user_id,
+        'sender_id' => Auth::guard('admin')->id(),
+        'type' => 'verification_rejected',
+        'message' => '❌ تم رفض التوثيق. السبب: ' . ($request->note ?? 'غير محدد'),
+        'link' => route('profile.edit'),
+    ]);
+    
+    return back()->with('success', 'تم رفض التوثيق');
+}
 }

@@ -29,6 +29,9 @@
         <p>{{ $service->description ?? __('No Description') }}</p>
         <div style="display: flex; gap: 2rem; background: var(--bg); padding: 1rem; border-radius: 0.75rem; margin: 1rem 0;">
             <div><strong>{{ number_format($service->price, 2) }} ر.س</strong></div>
+            @if($service->duration)
+                <div>⏱️ {{ $service->duration }}</div>
+            @endif
         </div>
         @auth
             <a href="{{ route('booking.create', $service->id) }}" class="btn btn-primary">📅 {{ __('Book') }}</a>
@@ -36,5 +39,51 @@
             <a href="{{ route('login') }}" class="btn btn-outline">{{ __('Login') }}</a>
         @endauth
     </div>
+
+    {{-- ===== قسم الخريطة (جديد) ===== --}}
+    @if($service->latitude && $service->longitude)
+    <div class="card" style="margin-top: 1rem;">
+        <h3 style="margin-bottom: 0.75rem;">📍 {{ __('Service Location') }}</h3>
+        
+        @if($service->address)
+            <p style="margin-bottom: 0.5rem; color: var(--text-secondary);">
+                📍 {{ $service->address }}
+            </p>
+        @endif
+        
+        <div id="map" style="height: 300px; border-radius: 8px;"></div>
+    </div>
+    @endif
 </div>
 @endsection
+
+@if($service->latitude && $service->longitude)
+@section('scripts')
+<script>
+function initMap() {
+    const location = { 
+        lat: {{ $service->latitude }}, 
+        lng: {{ $service->longitude }} 
+    };
+    
+    const map = new google.maps.Map(document.getElementById('map'), {
+        zoom: 14,
+        center: location,
+        mapTypeControl: true,
+        streetViewControl: true,
+        fullscreenControl: true
+    });
+    
+    new google.maps.Marker({
+        position: location,
+        map: map,
+        animation: google.maps.Animation.DROP,
+        title: '{{ $service->title }}'
+    });
+}
+</script>
+<script async defer 
+    src="https://maps.googleapis.com/maps/api/js?key={{ config('services.google_maps.api_key') }}&callback=initMap">
+</script>
+@endsection
+@endif

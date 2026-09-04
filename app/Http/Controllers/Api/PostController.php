@@ -8,7 +8,6 @@ use App\Http\Controllers\Controller;
 
 class PostController extends Controller
 {
-    // جلب المنشورات
     public function index(Request $request)
     {
         $posts = Post::with(['user', 'likes', 'comments' => function($q) {
@@ -18,21 +17,27 @@ class PostController extends Controller
         ->latest()
         ->limit(10)
         ->get();
-    
+
         $posts->transform(function ($post) {
             $post->likes_count = $post->likes->count();
             $post->comments_count = $post->comments->count();
+            
+            // ✅ تحويل الهاشتاق إلى رابط
+            $post->content = preg_replace(
+                '/#([\p{Arabic}a-zA-Z0-9_]+)/u',
+                '<a href="/hashtag/$1" style="color:#2563EB; text-decoration:none; font-weight:600;">#$1</a>',
+                $post->content
+            );
+            
             return $post;
         });
-    
+
         return response()->json([
             'success' => true,
             'data' => $posts
         ]);
     }
 
-
-    // جلب منشور محدد
     public function show($id)
     {
         $post = Post::with(['user', 'likes', 'comments.user'])->find($id);
@@ -46,6 +51,8 @@ class PostController extends Controller
 
         $post->likes_count = $post->likes->count();
         $post->comments_count = $post->comments->count();
+        
+       
 
         return response()->json([
             'success' => true,
@@ -53,7 +60,6 @@ class PostController extends Controller
         ]);
     }
 
-    // إنشاء منشور
     public function store(Request $request)
     {
         $request->validate([
@@ -72,7 +78,6 @@ class PostController extends Controller
         ]);
     }
 
-    // إعجاب
     public function toggleLike($id)
     {
         $post = Post::findOrFail($id);
@@ -93,7 +98,6 @@ class PostController extends Controller
         ]);
     }
 
-    // تعليق
     public function addComment(Request $request, $id)
     {
         $request->validate(['comment_text' => 'required|string']);
@@ -111,7 +115,6 @@ class PostController extends Controller
         ]);
     }
 
-    // حذف
     public function destroy($id)
     {
         $post = Post::where('id', $id)->where('user_id', auth()->id())->firstOrFail();

@@ -43,7 +43,20 @@ class ServiceController extends Controller
         $request->validate([
             'title' => 'required|string|max:255',
             'price' => 'required|numeric|min:1',
+            'latitude' => 'nullable|numeric|between:-90,90',
+            'longitude' => 'nullable|numeric|between:-180,180',
+            'address' => 'nullable|string|max:255',
+            'city' => 'nullable|string|max:100',
+            'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
+        
+        // ✅ رفع الصورة
+        $imageName = 'service-default.png';
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = 'service_' . time() . '_' . auth()->id() . '.' . $image->extension();
+            $image->move(public_path('uploads/services'), $imageName);
+        }
         
         Service::create([
             'provider_id' => auth()->id(),
@@ -51,6 +64,11 @@ class ServiceController extends Controller
             'description' => $request->description,
             'price' => $request->price,
             'duration' => $request->duration,
+            'image' => $imageName,
+            'latitude' => $request->latitude,
+            'longitude' => $request->longitude,
+            'address' => $request->address,
+            'city' => $request->city,
         ]);
 
         ActivityLogController::log(auth()->id(), 'create_service', 'إنشاء خدمة جديدة');
@@ -63,5 +81,27 @@ class ServiceController extends Controller
     {
         $service = Service::with('provider')->findOrFail($id);
         return view('service-show', compact('service'));
+    }
+    
+    public function nearby(Request $request)
+    {
+        $lat = $request->lat;
+        $lng = $request->lng;
+        $radius = $request->radius ?? 50;
+        
+        if (!$lat || !$lng) {
+            return response()->json([
+                'success' => false,
+                'message' => 'الموقع غير متوفر'
+            ]);
+        }
+        
+        $services = Service::nearby($lat, $lng, $radius);
+        
+        return response()->json([
+            'success' => true,
+            'data' => $services,
+            'count' => $services->count()
+        ]);
     }
 }

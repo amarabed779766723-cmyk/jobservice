@@ -9,8 +9,8 @@
     <div class="hero-overlay">
         <div class="hero-container">
             <div class="hero-content">
-            <h1 style="color:#FFFFFF; text-shadow:2px 2px 8px rgba(0,0,0,0.5);">اهلاً وسهلاً <br><span style="color:#FCD34D;">المنصة الأولى في اليمن</span></h1>
-            <p style="color:#F3F4F6; font-size:1.2rem; text-shadow:1px 1px 4px rgba(0,0,0,0.5);">المنصة التي تجعل أعمالك وطلباتك قريبة منك</p>
+            <h1 style="color:#FFFFFF; text-shadow:2px 2px 8px rgba(0,0,0,0.5);">{{ __('home.hero_title') }} <br><span style="color:#FCD34D;">{{ __('home.hero_title_span') }}</span></h1>
+            <p style="color:#F3F4F6; font-size:1.2rem; text-shadow:1px 1px 4px rgba(0,0,0,0.5);">{{ __('home.hero_desc') }}</p>
 
                 <div class="hero-btns">
                     <a href="{{ route('services.index') }}" class="btn-hero-primary">{{ __('home.browse_services') }}</a>
@@ -79,12 +79,12 @@
                 <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
                 <circle cx="12" cy="10" r="3"/>
             </svg>
-            خدمات قريبة منك 
+            {{ __('services.nearby_title') }}
         </h2>
         <a href="{{ route('services.index') }}">{{ __('home.view_all') }} →</a>
     </div>
     <div class="services-grid-new" id="nearbyServicesGrid">
-        <p style="text-align:center;color:var(--text-secondary);padding:2rem;">⏳ جاري البحث عن خدمات قريبة منك...</p>
+        <p style="text-align:center;color:var(--text-secondary);padding:2rem;">{{ __('services.searching') }}</p>
     </div>
 </section>
 
@@ -114,7 +114,6 @@
                 </svg>
             </div>
             <h3 class="card-title" style="text-align:center;">{{ __('home.add_featured_ad') }}</h3>
-
             @auth
                 <a href="{{ route('stories.index') }}" class="card-btn" style="display:block;text-align:center;text-decoration:none;">{{ __('home.add_ad_now') }}</a>
             @else
@@ -265,7 +264,8 @@
 <script>
 function handleError(error) { console.error('خطأ:', error); }
 
-// ===== 1. مقدمي الخدمة =====
+
+
 async function loadProviders() {
     try {
         const response = await fetch('/api/users?type=provider&limit=5');
@@ -283,7 +283,6 @@ async function loadProviders() {
     } catch (e) { handleError(e); }
 }
 
-// ===== 2. خدمات قريبة منك =====
 async function loadNearbyServices() {
     const container = document.getElementById('nearbyServicesGrid');
     
@@ -303,35 +302,40 @@ async function loadNearbyServices() {
                     const providerAvatar = s.provider && s.provider.avatar && s.provider.avatar !== 'default-avatar.png' 
                         ? '/uploads/avatars/' + s.provider.avatar 
                         : '/uploads/avatars/default-avatar.png';
-                    const providerName = s.provider ? s.provider.name : 'غير معروف';
-                    const distance = s.distance ? parseFloat(s.distance).toFixed(1) : '?';
-                    
-                    html += `
-                        <div class="service-new-card gold-card">
-                            <h4 class="service-new-title">${s.title}</h4>
-                            <div class="service-new-image">
-                                <img src="${providerAvatar}" alt="${s.title}">
-                            </div>
-                            <a href="/profile/${s.provider_id}" style="text-decoration:none;color:inherit;"><div class="service-new-provider">👤 ${providerName}</div></a>
-                            <div class="service-new-price">💰 ${s.price} ر.س</div>
-                            <div class="service-new-distance">📍 ${distance} كم</div>
-                            <a href="/service/${s.id}" class="btn-primary-blue">عرض الخدمة ←</a>
-                        </div>
-                    `;
+                    const providerName = s.provider ? s.provider.name : '{{ __("services.unknown") }}';
+                    const locationName = s.address || s.city || 'الموقع غير محدد';
+
+html += `
+    <div class="service-new-card gold-card">
+        <h4 class="service-new-title">${s.title}</h4>
+        <div class="service-new-image">
+            <img src="${providerAvatar}" alt="${s.title}">
+        </div>
+        <a href="/profile/${s.provider_id}" style="text-decoration:none;color:inherit;"><div class="service-new-provider">👤 ${providerName}</div></a>
+        <div class="service-new-price">💰 ${s.price} ر.ي</div>
+        <div class="service-new-distance">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#10B981" stroke="#10B981" stroke-width="1.5" style="vertical-align:middle; margin-left: 0.3rem;">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3" fill="white"/>
+            </svg>
+            ${locationName}
+        </div>
+        <a href="/service/${s.id}" class="btn-primary-blue">{{ __('home.view_service_btn') }}</a>
+    </div>
+`;
                 });
                 container.innerHTML = html;
             } else {
-                container.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:2rem;">📍 لا توجد خدمات قريبة منك حالياً. حدد موقعك من <a href="/edit-profile">الملف الشخصي</a> وسجل خدماتك!</p>';
+                container.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:2rem;">{{ __("services.no_nearby") }}</p>';
             }
         } catch (e) {
             container.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:2rem;">❌ حدث خطأ في جلب الخدمات القريبة</p>';
         }
     }, () => {
-        container.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:2rem;">📍 الرجاء السماح بتحديد الموقع لعرض الخدمات القريبة منك</p>';
+        container.innerHTML = '<p style="text-align:center;color:var(--text-secondary);padding:2rem;">{{ __("services.allow_location") }}</p>';
     });
 }
 
-// ===== 3. الخدمات - كارد ذهبي مع صورة مقدم الخدمة =====
 async function loadServices() {
     try {
         const response = await fetch('/api/services');
@@ -343,7 +347,7 @@ async function loadServices() {
                 const providerAvatar = s.provider && s.provider.avatar && s.provider.avatar !== 'default-avatar.png' 
                     ? '/uploads/avatars/' + s.provider.avatar 
                     : '/uploads/avatars/default-avatar.png';
-                const providerName = s.provider ? s.provider.name : 'غير معروف';
+                const providerName = s.provider ? s.provider.name : '{{ __("services.unknown") }}';
                 
                 html += `
                     <div class="service-new-card gold-card">
@@ -352,20 +356,19 @@ async function loadServices() {
                             <img src="${providerAvatar}" alt="${s.title}">
                         </div>
                         <a href="/profile/${s.provider_id}" style="text-decoration:none;color:inherit;"><div class="service-new-provider">👤 ${providerName}</div></a>
-                        <div class="service-new-price">💰 ${s.price} ر.س</div>
-                        <a href="/service/${s.id}" class="btn-primary-blue">عرض الخدمة ←</a>
+                        <div class="service-new-price">💰 ${s.price} ر.ي</div>
+                        <a href="/service/${s.id}" class="btn-primary-blue">{{ __('home.view_service_btn') }}</a>
                     </div>
                 `;
             });
             container.innerHTML = html;
             if (data.total > 6) {
-                document.getElementById('viewAllServices').innerHTML = `<a href="/services" class="btn-view-all">عرض جميع الخدمات (${data.total})</a>`;
+                document.getElementById('viewAllServices').innerHTML = `<a href="/services" class="btn-view-all">{{ __('home.view_all_services_btn') }} (${data.total})</a>`;
             }
         }
     } catch (e) { handleError(e); }
 }
 
-// ===== 4. المنشورات مع التعليقات المخفية =====
 async function loadPosts() {
     try {
         const response = await fetch('/api/posts');
@@ -409,7 +412,7 @@ async function loadPosts() {
                                         <a href="/profile/${cUserId}" style="text-decoration:none;color:inherit;"><strong>${cName}</strong></a>
                                         <span style="display:block;color:var(--text-secondary);">${c.comment_text}</span>
                                     </div>
-                                    ${isLoggedIn ? `<button onclick="showReplyForm(event, ${p.id}, ${c.id}, '${cName}')" style="background:none;border:none;color:var(--text-secondary);font-size:0.65rem;cursor:pointer;margin-top:0.1rem;">رد</button>` : ''}
+                                    ${isLoggedIn ? `<button onclick="showReplyForm(event, ${p.id}, ${c.id}, '${cName}')" style="background:none;border:none;color:var(--text-secondary);font-size:0.65rem;cursor:pointer;margin-top:0.1rem;">{{ __('comments.reply') }}</button>` : ''}
                                     <div id="replyForm-${c.id}" style="display:none;margin-top:0.3rem;"></div>
                                     
                                     ${replies.length > 0 ? `
@@ -435,18 +438,18 @@ async function loadPosts() {
                         `;
                     });
                     if (comments.length > 5) {
-                        commentsHtml += `<a href="/post/${p.id}" style="font-size:0.75rem;color:var(--primary);text-decoration:none;display:block;text-align:center;">عرض جميع التعليقات (${comments.length})</a>`;
+                        commentsHtml += `<a href="/post/${p.id}" style="font-size:0.75rem;color:var(--primary);text-decoration:none;display:block;text-align:center;">{{ __('comments.view_all') }} (${comments.length})</a>`;
                     }
                     commentsHtml += '</div>';
                 } else {
-                    commentsHtml = '<div class="comments-list" id="commentsList-' + p.id + '" style="display:none;margin-top:0.5rem;border-top:1px solid var(--border);padding-top:0.5rem;"><p style="color:var(--text-secondary);font-size:0.8rem;text-align:center;">لا توجد تعليقات</p></div>';
+                    commentsHtml = '<div class="comments-list" id="commentsList-' + p.id + '" style="display:none;margin-top:0.5rem;border-top:1px solid var(--border);padding-top:0.5rem;"><p style="color:var(--text-secondary);font-size:0.8rem;text-align:center;">{{ __("comments.no_comments") }}</p></div>';
                 }
                 
                 const commentBoxHtml = isLoggedIn ? `
                     <div id="commentBox-${p.id}" style="display:none;margin-top:0.5rem;border-top:1px solid var(--border);padding-top:0.5rem;">
                         <form onsubmit="submitComment(event, ${p.id}, null)" style="display:flex;gap:0.5rem;">
-                            <input type="text" name="comment_text" placeholder="اكتب تعليقاً..." required style="flex:1;padding:0.5rem 0.75rem;border:1px solid var(--border);border-radius:2rem;font-family:'Tajawal',sans-serif;font-size:0.8rem;">
-                            <button type="submit" class="btn btn-primary btn-sm">إرسال</button>
+                            <input type="text" name="comment_text" placeholder="{{ __('comments.write_comment') }}" required style="flex:1;padding:0.5rem 0.75rem;border:1px solid var(--border);border-radius:2rem;font-family:'Tajawal',sans-serif;font-size:0.8rem;">
+                            <button type="submit" class="btn btn-primary btn-sm">{{ __('Send') }}</button>
                         </form>
                     </div>` : '';
                 
@@ -458,9 +461,9 @@ async function loadPosts() {
                                 <a href="/profile/${userId}" style="text-decoration:none;color:inherit;"><div class="name">${name} <span class="badge">${type}</span></div></a>
                                 <div class="time">${p.created_at ? new Date(p.created_at).toLocaleDateString('ar') : ''}</div>
                             </div>
-                            <button class="more-btn">⋯</button>
+                            
                         </div>
-                        <div class="post-content"><p>${p.content}</p>${img ? `<img src="${img}" alt="صورة المنشور">` : ''}</div>
+                            <div class="post-content"><p>${p.content}</p>${img ? `<img src="${img}" alt="صورة المنشور">` : ''}</div>
                         <div class="post-actions">
                             <button ${likeAction}>❤️ <span class="like-count">${likesCount}</span></button>
                             <button ${commentAction}>💬 <span>${commentsCount}</span></button>
@@ -472,14 +475,13 @@ async function loadPosts() {
             });
             container.innerHTML = html;
         } else {
-            document.getElementById('postsContainer').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-secondary);">لا توجد منشورات حالياً</div>';
+            document.getElementById('postsContainer').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-secondary);">{{ __("posts.no_posts") }}</div>';
         }
     } catch (e) {
         document.getElementById('postsContainer').innerHTML = '<div style="text-align:center;padding:2rem;color:var(--text-secondary);">حدث خطأ في تحميل المنشورات</div>';
     }
 }
 
-// ===== 5. الطلبات المفتوحة =====
 async function loadRequestsExpanded() {
     try {
         const response = await fetch('/api/requests');
@@ -496,15 +498,15 @@ async function loadRequestsExpanded() {
                             <img src="${userAvatar}" alt="${userName}">
                             <div>
                                 <div class="request-title">${r.title}</div>
-                                <div class="request-client">بواسطة ${userName}</div>
+                                <div class="request-client">${userName}</div>
                             </div>
                         </div>
                         <div class="request-meta">
-                            <span class="request-budget">💰 ${r.budget} ر.س</span>
+                            <span class="request-budget">💰 ${r.budget} ر.ي</span>
                             <span class="request-offers">📋 ${r.offers_count || 0} عروض</span>
                             <span class="request-date">🕐 ${r.created_at ? new Date(r.created_at).toLocaleDateString('ar') : ''}</span>
                         </div>
-                        <a href="/request/${r.id}" class="request-view-btn">عرض التفاصيل →</a>
+                  <a href="/request/${r.id}" class="request-view-btn">{{ __('View Details') }} →</a>
                     </div>
                 `;
             });
@@ -513,7 +515,6 @@ async function loadRequestsExpanded() {
     } catch (e) { handleError(e); }
 }
 
-// ===== 6. الإعلانات =====
 async function loadAdsAsStories() {
     try {
         const response = await fetch('/api/stories?is_ad=1');
@@ -535,7 +536,6 @@ async function loadAdsAsStories() {
     } catch (e) { handleError(e); }
 }
 
-// ===== 7. المتخصصين حسب التقييم =====
 async function loadTopProviders() {
     try {
         const response = await fetch('/api/users?type=provider&limit=3&sort=rating');
@@ -575,7 +575,6 @@ document.addEventListener('DOMContentLoaded', function() {
     loadTopProviders();
 });
 
-// ==================== دوال التعليقات والإعجابات ====================
 function toggleComments(postId) {
     var commentsList = document.getElementById('commentsList-' + postId);
     var commentBox = document.getElementById('commentBox-' + postId);
@@ -599,8 +598,8 @@ function showReplyForm(event, postId, commentId, commentUser) {
             formDiv.style.display = 'block';
             formDiv.innerHTML = `
                 <form onsubmit="submitComment(event, ${postId}, ${commentId})" style="display:flex;gap:0.3rem;">
-                    <input type="text" name="comment_text" placeholder="رد على ${commentUser}..." required style="flex:1;padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:2rem;font-family:'Tajawal',sans-serif;font-size:0.75rem;">
-                    <button type="submit" class="btn btn-primary btn-sm" style="font-size:0.7rem;padding:0.3rem 0.8rem;">رد</button>
+                    <input type="text" name="comment_text" placeholder="{{ __('comments.reply_to') }} ${commentUser}..." required style="flex:1;padding:0.4rem 0.6rem;border:1px solid var(--border);border-radius:2rem;font-family:'Tajawal',sans-serif;font-size:0.75rem;">
+                    <button type="submit" class="btn btn-primary btn-sm" style="font-size:0.7rem;padding:0.3rem 0.8rem;">{{ __('comments.reply') }}</button>
                 </form>
             `;
         } else {

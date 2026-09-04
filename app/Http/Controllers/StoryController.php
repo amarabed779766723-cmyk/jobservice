@@ -57,7 +57,7 @@ class StoryController extends Controller
             $file->move($destinationPath, $filename);
         }
     
-        Story::create([
+        $story = Story::create([
             'user_id' => Auth::id(),
             'image' => $filename,
             'caption' => $request->caption,
@@ -65,13 +65,37 @@ class StoryController extends Controller
             'is_ad' => 1,
             'package_id' => $package->id,
             'status' => 'pending',
-            'link' => $request->link
+            'link' => $request->link,
+            'ad_price' => $package->price,  // ✅ إضافة السعر
         ]);
 
-        ActivityLogController::log(Auth::id(), 'create_ad', 'رفع إعلان جديد - ' . $package->name);
-        ActivityLogController::notifyAdmin(Auth::user()->name . ' رفع إعلان جديد - انتظار الموافقة', route('admin.ads'));
+        // ✅ إنشاء معاملة مالية pending
+        \App\Models\Transaction::create([
+            'user_id' => Auth::id(),
+            'package_id' => null,
+            'amount' => $package->price,
+            'type' => 'ad',
+            'status' => 'pending',
+            'sender_name' => Auth::user()->name,
+            'sender_phone' => Auth::user()->phone,
+        ]);
+
+        // ✅ إشعار للأدمن بالدفع المعلق
+        $admins = \App\Models\User::where('role', 'admin')->get();
+        foreach ($admins as $admin) {
+            \App\Models\Notification::create([
+                'user_id' => $admin->id,
+                'sender_id' => Auth::id(),
+                'type' => 'payment_pending',
+                'message' => '📢 إعلان جديد من ' . Auth::user()->name . ' - ' . $package->name . ' - ' . $package->price . ' ر.ي',
+                'link' => route('admin.transactions'),
+            ]);
+        }
+
+        ActivityLogController::log(Auth::id(), 'create_ad', 'رفع إعلان جديد - ' . $package->name . ' - ' . $package->price . ' ر.ي');
+        ActivityLogController::notifyAdmin(Auth::user()->name . ' رفع إعلان جديد - ' . $package->name . ' - ' . $package->price . ' ر.ي - انتظار تأكيد الدفع', route('admin.transactions'));
     
-        return redirect()->route('stories.index')->with('success', 'تم رفع الإعلان! في انتظار موافقة الإدارة.');
+        return redirect()->route('stories.index')->with('success', '✅ تم رفع الإعلان! سيتم نشره بعد تأكيد الدفع.');
     }
 
     public function getUserStories($userId)

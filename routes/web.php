@@ -34,12 +34,18 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 // ========== Routes العامة ==========
 Route::post('/banned-note', [BannedNoteController::class, 'store'])->name('banned.note');
 Route::get('/search', [SearchController::class, 'index'])->name('search');
+Route::get('/hashtag/{tag}', [SearchController::class, 'hashtagPosts'])->name('hashtag.search');
+
 
 Route::get('/home', [HomeController::class, 'index'])->name('home');
 
 // ========== Routes عرض الخدمات والطلبات والمنشورات (عامة) ==========
 Route::get('/services', [ServiceController::class, 'index'])->name('services.index');
 Route::get('/service/{id}', [ServiceController::class, 'show'])->name('service.show');
+
+// ✅ جديد: البحث عن الخدمات القريبة
+Route::get('/services-nearby', [ServiceController::class, 'nearby'])->name('services.nearby');
+
 Route::get('/requests', [RequestController::class, 'index'])->name('requests.index');
 Route::get('/request/{id}', [RequestController::class, 'show'])->name('request.show');
 Route::get('/post/{id}', [PostController::class, 'show'])->name('post.show');
@@ -67,6 +73,8 @@ Route::post('/save-location', function(Request $request) {
         Auth::user()->update([
             'latitude' => $request->latitude,
             'longitude' => $request->longitude,
+            'address' => $request->address ?? Auth::user()->address,
+            'city' => $request->city ?? Auth::user()->city,
         ]);
         return response()->json(['success' => true]);
     }
@@ -203,6 +211,15 @@ Route::prefix('admin')->group(function () {
         Route::get('/ads', [AdminController::class, 'ads'])->name('admin.ads');
         Route::post('/ads/approve/{id}', [AdminController::class, 'approveAd'])->name('admin.ads.approve');
         Route::post('/ads/reject/{id}', [AdminController::class, 'rejectAd'])->name('admin.ads.reject');
-        Route::get('/revenue', [AdminController::class, 'revenue'])->name('admin.revenue');
+        
+        // ✅ التوثيق
+        Route::get('/verifications', [AdminController::class, 'verifications'])->name('admin.verifications');
+        Route::post('/verifications/{id}/approve', [AdminController::class, 'approveVerification'])->name('admin.verifications.approve');
+        Route::post('/verifications/{id}/reject', [AdminController::class, 'rejectVerification'])->name('admin.verifications.reject');
+        
+        // ✅ المعاملات
+        Route::get('/transactions', [AdminController::class, 'transactions'])->name('admin.transactions');
+        Route::post('/transactions/{id}/confirm', [AdminController::class, 'confirmTransaction'])->name('admin.transactions.confirm');
+        Route::post('/transactions/{id}/reject', [AdminController::class, 'rejectTransaction'])->name('admin.transactions.reject');
     });
 });

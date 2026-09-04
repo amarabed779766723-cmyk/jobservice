@@ -21,17 +21,35 @@
             <div class="input-group"><label>✍️ {{ __('Ad Text') }}</label><input type="text" name="caption" placeholder="{{ __('Write ad text...') }}"></div>
 
             <h4 style="margin: 1rem 0 0.5rem;">💰 {{ __('Choose Package') }}</h4>
-            @php $packages = \App\Models\AdPackage::all(); @endphp
+            
+            {{-- ✅ عرض المحفظة --}}
+            @php 
+                $packages = \App\Models\AdPackage::all(); 
+                $wallet = \App\Models\WalletSetting::getActive();
+            @endphp
+            
+            @if($wallet)
+            <div style="background: linear-gradient(135deg, #10b981, #059669); color: white; padding: 1rem; border-radius: 12px; margin-bottom: 1rem; text-align: center;">
+                <p style="font-size: 0.9rem; margin-bottom: 0.25rem;">📱 للدفع عبر {{ $wallet->wallet_name }}</p>
+                <p style="font-size: 1.3rem; font-weight: 900; color: #fbbf24;">{{ $wallet->wallet_number }}</p>
+                <p style="font-size: 0.85rem; opacity: 0.9;">{{ $wallet->wallet_owner }}</p>
+            </div>
+            @endif
+            
             @foreach($packages as $pkg)
             <label style="display:flex; justify-content:space-between; align-items:center; padding:0.75rem 1rem; border:1px solid var(--border); border-radius:8px; margin-bottom:0.5rem; cursor:pointer;">
                 <div>
                     <strong>{{ $pkg->name }}</strong>
                     <span style="color:var(--text-secondary); font-size:0.85rem; display:block;">{{ $pkg->duration_days }} {{ __('Days') }}</span>
                 </div>
-                <span style="color:var(--primary); font-weight:700;">{{ number_format($pkg->price) }} ر.س</span>
+                <span style="color:var(--primary); font-weight:700;">{{ number_format($pkg->price) }} ر.ي</span>
                 <input type="radio" name="package_id" value="{{ $pkg->id }}" required>
             </label>
             @endforeach
+
+            <div style="background:#fef3c7; padding:0.75rem; border-radius:8px; margin-top:1rem; font-size:0.85rem; color:#92400e;">
+                ⚠️ {{ __('After submitting, you need to transfer the amount and the ad will be published after payment confirmation.') }}
+            </div>
 
             <button type="submit" class="btn btn-primary" style="width:100%; margin-top:1rem;">📢 {{ __('Submit Ad') }}</button>
         </form>
@@ -62,6 +80,11 @@
                             @endif
                             · 👁️ {{ $ad->views()->count() }} {{ __('Views') }}
                         </p>
+                        @if($ad->ad_price > 0)
+                        <p style="color:var(--primary); font-size:0.8rem; font-weight:700;">
+                            💰 {{ number_format($ad->ad_price) }} ر.ي
+                        </p>
+                        @endif
                     </div>
                     <form action="{{ route('stories.delete', $ad->id) }}" method="POST">
                         @csrf @method('DELETE')

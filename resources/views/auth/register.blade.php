@@ -5,14 +5,14 @@
 @section('content')
 <div class="auth-page">
     <div class="auth-box">
-        <div class="brand-logo">Job Service</div>
+      <img src="{{ asset('assets/branding/logo-full.png') }}" alt="JOB SERVICE" class="branding-logo auth">
         <div class="brand-slogan">أنشئ حسابك المهني</div>
 
         @if($errors->any())
             <div class="error-msg">{{ $errors->first() }}</div>
         @endif
 
-        <form method="POST" action="{{ route('register') }}" id="registerForm">
+        <form method="POST" action="{{ route('register') }}" id="registerForm" enctype="multipart/form-data">
             @csrf
             <div class="input-group">
                 <label>الاسم الكامل</label>
@@ -67,6 +67,27 @@
                 <label for="providerRadio" class="type-btn" onclick="selectType('provider')">مقدم خدمات</label>
             </div>
 
+            {{-- ✅ قسم التوثيق - يظهر فقط لمقدمي الخدمة --}}
+            <div id="verificationSection" style="display:none; margin-top:1rem;">
+                <div class="input-group">
+                    <label>🪪 نوع التوثيق</label>
+                    <select name="verification_type" id="verificationType">
+                        <option value="">اختر نوع التوثيق</option>
+                        <option value="national_id">بطاقة شخصية</option>
+                        <option value="university_certificate">شهادة جامعية</option>
+                        <option value="professional_certificate">شهادة مهنية/خبرة</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>📷 صورة المستند</label>
+                    <input type="file" name="document_image" id="documentImage" accept="image/*">
+                    <small style="color:var(--text-secondary);">
+                        ⚠️ يجب أن تكون الصورة واضحة وحقيقية - سيتم مراجعتها من الإدارة
+                    </small>
+                </div>
+            </div>
+
             <button type="submit" class="btn-primary" style="width:100%; margin-top:1rem;">إنشاء حساب</button>
         </form>
 
@@ -79,9 +100,35 @@
 <script>
 function selectType(type) {
     document.getElementById(type === 'client' ? 'clientRadio' : 'providerRadio').checked = true;
-    document.getElementById('clientRadio').parentElement.querySelector('.type-btn').classList.toggle('active', type === 'client');
-    document.getElementById('providerRadio').parentElement.querySelector('.type-btn').classList.toggle('active', type === 'provider');
+    
+    // ✅ تعديل الأزرار
+    document.querySelectorAll('.type-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(type === 'client' ? 'clientRadio' : 'providerRadio')
+        .parentElement.querySelector('.type-btn').classList.add('active');
+    
+    // ✅ إظهار/إخفاء قسم التوثيق
+    const verificationSection = document.getElementById('verificationSection');
+    const verificationType = document.getElementById('verificationType');
+    const documentImage = document.getElementById('documentImage');
+    
+    if (type === 'provider') {
+        verificationSection.style.display = 'block';
+        verificationType.required = true;
+        documentImage.required = true;
+    } else {
+        verificationSection.style.display = 'none';
+        verificationType.required = false;
+        documentImage.required = false;
+    }
 }
+
+// ✅ عند تحميل الصفحة - إذا كان مقدم خدمة محدد مسبقاً
+document.addEventListener('DOMContentLoaded', function() {
+    const providerRadio = document.getElementById('providerRadio');
+    if (providerRadio && providerRadio.checked) {
+        selectType('provider');
+    }
+});
 
 // قوة كلمة المرور
 document.getElementById('password').addEventListener('input', function() {

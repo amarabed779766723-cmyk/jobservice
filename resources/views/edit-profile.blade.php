@@ -83,6 +83,12 @@ function getCurrentLocation() {
 
     document.getElementById('locationStatus').textContent = '⏳ جاري تحديد موقعك...';
 
+    var options = {
+        enableHighAccuracy: true,
+        timeout: 20000,
+        maximumAge: 0
+    };
+
     navigator.geolocation.getCurrentPosition(
         function(pos) {
             var lat = pos.coords.latitude;
@@ -91,23 +97,109 @@ function getCurrentLocation() {
             document.getElementById('latitudeInput').value = lat;
             document.getElementById('longitudeInput').value = lng;
             
-            // ✅ جلب اسم المدينة من الإحداثيات
-            fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&accept-language=ar')
-                .then(r => r.json())
-                .then(data => {
-                    var city = data.address.city || data.address.town || data.address.village || data.address.state || 'موقعك الحالي';
+            // ✅ جلب العنوان - مع User-Agent إجباري
+            var url = 'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=' + lat + '&lon=' + lng + '&accept-language=ar';
+            
+            fetch(url, {
+                method: 'GET',
+                headers: {
+                    'User-Agent': 'JobService/1.0 (jobservice@gmail.com)',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(function(r) {
+                if (!r.ok) {
+                    throw new Error('HTTP ' + r.status);
+                }
+                return r.json();
+            })
+            .then(function(data) {
+                console.log('✅ بيانات الموقع:', data);
+                
+                var address = data.display_name || '';
+                var city = '';
+                var road = '';
+                var suburb = '';
+                var neighbourhood = '';
+                
+                if (data.address) {
+                    road = data.address.road || data.address.pedestrian || '';
+                    suburb = data.address.suburb || data.address.neighbourhood || '';
+                    city = data.address.city || data.address.town || data.address.village || data.address.state || '';
+                    
+                    // ✅ تجميع العنوان بالتفصيل - الشارع + الحي + المدينة
+                    var parts = [];
+                    if (road) parts.push(road);
+                    if (suburb) parts.push(suburb);
+                    if (city) parts.push(city);
+                    
+                    address = parts.join('، ') || address;
+                }
+                
+                // ✅ تعبئة الحقول
+                if (city) {
                     document.getElementById('cityInput').value = city;
-                    document.getElementById('addressInput').value = data.display_name;
-                    document.getElementById('locationStatus').textContent = '✅ تم تحديد موقعك: ' + city;
-                })
-                .catch(function() {
-                    document.getElementById('cityInput').value = lat.toFixed(4) + ', ' + lng.toFixed(4);
-                    document.getElementById('locationStatus').textContent = '✅ تم تحديد موقعك';
-                });
+                }
+                if (address) {
+                    document.getElementById('addressInput').value = address;
+                }
+                
+                document.getElementById('locationStatus').textContent = '✅ تم تحديد موقعك: ' + (address || city || 'تم');
+            })
+            .catch(function(error) {
+                console.log('❌ خطأ:', error);
+                
+                // ✅ إذا فشل - جرب Google Geocoding
+                var googleUrl = 'https://maps.googleapis.com/maps/api/geocode/json?latlng=' + lat + ',' + lng + '&key={{ config("services.google_maps.api_key") }}&language=ar';
+                
+                return fetch(googleUrl);
+            })
+            .then(function(r) {
+                if (r && r.ok) {
+                    return r.json();
+                }
+                return null;
+            })
+            .then(function(data) {
+                if (data && data.results && data.results.length > 0) {
+                    var result = data.results[0];
+                    var address = result.formatted_address;
+                    var city = '';
+                    
+                    result.address_components.forEach(function(component) {
+                        if (component.types.includes('locality') || component.types.includes('administrative_area_level_1')) {
+                            city = component.long_name;
+                        }
+                    });
+                    
+                    if (city) document.getElementById('cityInput').value = city;
+                    if (address) document.getElementById('addressInput').value = address;
+                    
+                    document.getElementById('locationStatus').textContent = '✅ تم تحديد موقعك: ' + (city || address || 'تم');
+                }
+            })
+            .catch(function(error) {
+                console.log('❌ خطأ نهائي:', error);
+                document.getElementById('locationStatus').textContent = '✅ تم تحديد موقعك (الإحداثيات: ' + lat.toFixed(4) + ', ' + lng.toFixed(4) + ')';
+            });
         },
         function(err) {
-            document.getElementById('locationStatus').textContent = '❌ لم نتمكن من تحديد موقعك. تأكد من تفعيل GPS.';
-        }
+            switch(err.code) {
+                case err.PERMISSION_DENIED:
+                    document.getElementById('locationStatus').textContent = '❌ تم رفض إذن الموقع';
+                    break;
+                case err.POSITION_UNAVAILABLE:
+                    document.getElementById('locationStatus').textContent = '❌ معلومات الموقع غير متاحة';
+                    break;
+                case err.TIMEOUT:
+                    document.getElementById('locationStatus').textContent = '❌ انتهت المهلة';
+                    break;
+                default:
+                    document.getElementById('locationStatus').textContent = '❌ خطأ: ' + err.message;
+                    break;
+            }
+        },
+        options
     );
 }
 </script>

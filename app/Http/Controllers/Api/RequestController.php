@@ -16,6 +16,18 @@ class RequestController extends Controller
             ->latest()
             ->paginate(10);
 
+        // ✅ تحويل الهاشتاقات
+        $requests->getCollection()->transform(function($request) {
+            if ($request->description) {
+                $request->description = preg_replace(
+                    '/#([\p{Arabic}a-zA-Z0-9_]+)/u',
+                    '<a href="/hashtag/$1" style="color:#2563EB; text-decoration:none; font-weight:600;">#$1</a>',
+                    $request->description
+                );
+            }
+            return $request;
+        });
+
         return response()->json([
             'success' => true,
             'data' => $requests->items(),
@@ -35,6 +47,15 @@ class RequestController extends Controller
                 'success' => false,
                 'message' => 'الطلب غير موجود'
             ], 404);
+        }
+
+        // ✅ تحويل الهاشتاقات
+        if ($request->description) {
+            $request->description = preg_replace(
+                '/#([\p{Arabic}a-zA-Z0-9_]+)/u',
+                '<a href="/hashtag/$1" style="color:#2563EB; text-decoration:none; font-weight:600;">#$1</a>',
+                $request->description
+            );
         }
 
         return response()->json([

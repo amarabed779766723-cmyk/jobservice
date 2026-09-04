@@ -47,14 +47,8 @@
         </div>
 
         <div class="topbar-right" style="display:flex;align-items:center;gap:0.5rem;">
-
-            {{-- ===== شعار Job Service ===== --}}
-            <a href="{{ route('home') }}" style="font-size:1.2rem;font-weight:900;color:var(--primary);text-decoration:none;display:flex;align-items:center;gap:0.4rem;">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-                </svg>
-                <span>Job Service</span>
+  
+               <x-logo type="full" class="logo-header" />
             </a>
 
             {{-- ===== إشعارات ===== --}}
@@ -304,16 +298,98 @@
     }
     </script>
 
+    {{-- ✅ تحديد الموقع الحقيقي تلقائياً --}}
     <script>
-    if (navigator.geolocation) {
+    function getUserRealLocation() {
+        if (!navigator.geolocation) {
+            console.log('⚠️ متصفحك لا يدعم تحديد الموقع');
+            return;
+        }
+        
+        var options = {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        };
+        
         navigator.geolocation.getCurrentPosition(function(pos) {
+            var lat = pos.coords.latitude;
+            var lng = pos.coords.longitude;
+            var accuracy = pos.coords.accuracy;
+            
+            console.log('✅ الموقع الحقيقي:', lat, lng);
+            console.log('📏 الدقة:', accuracy + ' متر');
+            
+            // حفظ الموقع
             fetch('{{ route("save.location") }}', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') },
-                body: JSON.stringify({ latitude: pos.coords.latitude, longitude: pos.coords.longitude })
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') 
+                },
+                body: JSON.stringify({ 
+                    latitude: lat, 
+                    longitude: lng 
+                })
+            })
+            .then(function(res) { return res.json(); })
+            .then(function() {
+                // جلب اسم المدينة والعنوان
+                return fetch('https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lng + '&accept-language=ar');
+            })
+            .then(function(res) { return res.json(); })
+            .then(function(data) {
+                if (data.display_name) {
+                    var city = '';
+                    if (data.address) {
+                        city = data.address.city || data.address.town || data.address.state || data.address.county || '';
+                    }
+                    
+                    fetch('{{ route("save.location") }}', {
+                        method: 'POST',
+                        headers: { 
+                            'Content-Type': 'application/json', 
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content') 
+                        },
+                        body: JSON.stringify({ 
+                            latitude: lat, 
+                            longitude: lng,
+                            address: data.display_name,
+                            city: city
+                        })
+                    })
+                    .then(function() {
+                        console.log('✅ تم حفظ الموقع الكامل: ' + city);
+                    });
+                }
+            })
+            .catch(function(error) {
+                console.log('❌ خطأ:', error);
             });
-        });
+            
+        }, function(error) {
+            switch(error.code) {
+                case error.PERMISSION_DENIED:
+                    console.log('❌ تم رفض إذن الموقع');
+                    break;
+                case error.POSITION_UNAVAILABLE:
+                    console.log('❌ معلومات الموقع غير متاحة');
+                    break;
+                case error.TIMEOUT:
+                    console.log('❌ انتهت مهلة تحديد الموقع');
+                    break;
+                default:
+                    console.log('❌ خطأ غير معروف');
+                    break;
+            }
+        }, options);
     }
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+            getUserRealLocation();
+        }, 1000);
+    });
     </script>
 
 </body>

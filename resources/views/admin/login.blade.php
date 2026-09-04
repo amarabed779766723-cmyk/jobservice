@@ -73,7 +73,7 @@
 
     {{-- صفحة الدخول --}}
     <div class="login-container" id="loginBox">
-        <div class="login-logo">🛡️</div>
+       <img src="{{ asset('assets/branding/logo-full.png') }}" alt="JOB SERVICE" class="branding-logo auth">
         <div class="login-title">لوحة التحكم</div>
         <div class="login-subtitle">تسجيل دخول المدير</div>
 
@@ -281,6 +281,43 @@
             }
         });
     }
+    // ✅ الانتقال التلقائي بين حقول الكود
+document.addEventListener('DOMContentLoaded', function() {
+    var digits = document.querySelectorAll('.code-digit');
+    
+    digits.forEach(function(input, index) {
+        // كتابة رقم → انتقال تلقائي
+        input.addEventListener('input', function() {
+            this.value = this.value.replace(/[^0-9]/g, '');
+            
+            if (this.value.length === 1 && index < 5) {
+                digits[index + 1].focus();
+            }
+        });
+        
+        // مسح → رجوع للحقل السابق
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Backspace' && !this.value && index > 0) {
+                digits[index - 1].focus();
+            }
+        });
+    });
+    
+    // لصق الكود كامل
+    document.querySelector('.code-inputs').addEventListener('paste', function(e) {
+        e.preventDefault();
+        var pasted = (e.clipboardData || window.clipboardData).getData('text');
+        pasted = pasted.replace(/[^0-9]/g, '').substring(0, 6);
+        
+        digits.forEach(function(input, i) {
+            input.value = pasted[i] || '';
+        });
+        
+        if (pasted.length === 6) {
+            digits[5].focus();
+        }
+    });
+});
     </script>
 </body>
 </html>

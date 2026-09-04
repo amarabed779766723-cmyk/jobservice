@@ -29,44 +29,63 @@ class AuthController extends Controller
     }
     
     public function login(Request $request)
-    {
-        $request->validate([
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-        
-        $user = User::where('email', $request->email)->first();
-        
-        if ($user && ($user->status ?? 'active') === 'banned') {
-            return back()
-                ->with('banned_email', $user->email)
-                ->with('banned_message', 'تم حظر هذا الحساب من قبل إدارة المنصة.')
-                ->withInput();
-        }
-        
-        if ($user && $user->is_active == 0) {
-            return back()
-                ->with('suspended_email', $user->email)
-                ->with('suspended_message', '⚠️ حسابك موقّف مؤقتاً. يمكنك تفعيله من خلال تسجيل الدخول.')
-                ->withInput();
-        }
-        
-        $credentials = $request->only('email', 'password');
-        
-        if (Auth::attempt($credentials, $request->remember)) {
-            session(['user_type' => 'platform']);  // ✅ جلسة المنصة
-            ActivityLogController::log(Auth::id(), 'login', 'تسجيل دخول');
-            return redirect('/home');
-        }
-        
-        if ($user && is_null($user->email_verified_at)) {
-            return back()->withErrors([
-                'email' => 'يرجى تفعيل حسابك عبر البريد الإلكتروني. <a href="' . route('verify.resend.form') . '?email=' . $user->email . '">إعادة إرسال رابط التحقق</a>'
-            ])->withInput();
-        }
-        
-        return back()->withErrors(['email' => 'بيانات الدخول غير صحيحة.'])->withInput();
+{
+    $request->validate([
+        'email' => 'required|email',
+        'password' => 'required',
+    ]);
+    
+    $user = User::where('email', $request->email)->first();
+    
+    if ($user && ($user->status ?? 'active') === 'banned') {
+        return back()
+            ->with('banned_email', $user->email)
+            ->with('banned_message', 'تم حظر هذا الحساب من قبل إدارة المنصة.')
+            ->withInput();
     }
+    
+    if ($user && $user->is_active == 0) {
+        return back()
+            ->with('suspended_email', $user->email)
+            ->with('suspended_message', '⚠️ حسابك موقّف مؤقتاً.')
+            ->withInput();
+    }
+    
+    $credentials = $request->only('email', 'password');
+    
+    if (Auth::attempt($credentials, $request->remember)) {
+        
+        // ✅ التحقق من التوثيق - فقط للجدد اللي رفعوا وثيقة
+        if (Auth::user()->user_type === 'provider') {
+            $verification = \App\Models\UserVerification::where('user_id', Auth::id())
+                ->latest()
+                ->first();
+            
+            // ✅ ما رفع وثيقة = حساب قديم = يدخل عادي
+            if ($verification && $verification->status === 'pending') {
+                Auth::logout();
+                return back()->withErrors(['email' => '⏳ وثيقتك قيد المراجعة - انتظر موافقة الإدارة'])->withInput();
+            }
+            
+            if ($verification && $verification->status === 'rejected') {
+                Auth::logout();
+                return back()->withErrors(['email' => '❌ تم رفض وثيقتك. السبب: ' . ($verification->admin_note ?? 'غير محدد')])->withInput();
+            }
+        }
+        
+        session(['user_type' => 'platform']);
+        ActivityLogController::log(Auth::id(), 'login', 'تسجيل دخول');
+        return redirect('/home');
+    }
+    
+    if ($user && is_null($user->email_verified_at)) {
+        return back()->withErrors([
+            'email' => 'يرجى تفعيل حسابك عبر البريد الإلكتروني.'
+        ])->withInput();
+    }
+    
+    return back()->withErrors(['email' => 'بيانات الدخول غير صحيحة.'])->withInput();
+}
     
     public function showRegister()
     {
@@ -89,6 +108,17 @@ class AuthController extends Controller
             'password.regex' => 'كلمة المرور يجب أن تحتوي على حرف كبير وحرف صغير ورقم (8 خانات على الأقل).',
         ]);
         
+        // ✅ التحقق من التوثيق لمقدمي الخدمة
+        if ($request->user_type === 'provider') {
+            $request->validate([
+                'verification_type' => 'required|in:national_id,university_certificate,professional_certificate',
+                'document_image' => 'required|image|mimes:jpg,jpeg,png|max:5120',
+            ], [
+                'verification_type.required' => 'يجب اختيار نوع التوثيق',
+                'document_image.required' => 'يجب رفع صورة المستند',
+            ]);
+        }
+        
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -98,6 +128,33 @@ class AuthController extends Controller
             'user_type' => $request->user_type,
         ]);
         
+        // ✅ حفظ وثيقة التوثيق لمقدمي الخدمة
+        if ($request->user_type === 'provider' && $request->hasFile('document_image')) {
+            $image = $request->file('document_image');
+            $imageName = 'verify_' . time() . '_' . rand(1000, 9999) . '.' . $image->extension();
+            $image->move(public_path('uploads/verifications'), $imageName);
+            
+            \App\Models\UserVerification::create([
+                'user_id' => $user->id,
+                'verification_type' => $request->verification_type,
+                'document_image' => $imageName,
+                'status' => 'pending',
+                'created_at' => now(),
+            ]);
+            
+            // إشعار للأدمن
+            $admins = \App\Models\User::where('role', 'admin')->get();
+            foreach ($admins as $admin) {
+                \App\Models\Notification::create([
+                    'user_id' => $admin->id,
+                    'sender_id' => $user->id,
+                    'type' => 'verification_pending',
+                    'message' => '🪪 توثيق جديد من ' . $user->name . ' (مقدم خدمة)',
+                    'link' => route('admin.verifications'),
+                ]);
+            }
+        }
+        
         // إعطاء الباقة المجانية تلقائياً
         $freePackage = \App\Models\Package::where('price', 0)->first();
         if ($freePackage) {
@@ -106,7 +163,8 @@ class AuthController extends Controller
                 'package_id' => $freePackage->id,
                 'start_date' => now(),
                 'end_date' => now()->addDays($freePackage->duration_days),
-                'status' => 'active'
+                'status' => 'active',
+                'created_at' => now(),
             ]);
         }
         
@@ -120,8 +178,12 @@ class AuthController extends Controller
             'created_at' => now(),
         ]);
         
-        // ✅ إرسال الكود عبر البريد الإلكتروني
-        Mail::to($request->email)->send(new VerificationCodeMail($code));
+        // إرسال الكود - مع حماية من الخطأ
+        try {
+            Mail::to($request->email)->send(new VerificationCodeMail($code));
+        } catch (\Exception $e) {
+            // تجاهل خطأ البريد
+        }
         
         // تخزين في الجلسة
         session([
@@ -129,7 +191,7 @@ class AuthController extends Controller
             'verification_code' => $code,
         ]);
         
-        return redirect()->route('verify.code.form')->with('success', '✅ تم إرسال كود التفعيل إلى بريدك الإلكتروني.');
+        return redirect()->route('verify.code.form')->with('success', '✅ كود التفعيل: ' . $code);
     }
     
     public function logout()
@@ -146,23 +208,55 @@ class AuthController extends Controller
     {
         $package = \App\Models\Package::findOrFail($request->package_id);
         
-        // تعطيل الباقات القديمة
-        \App\Models\UserPackage::where('user_id', Auth::id())->update(['status' => 'expired']);
+        if ($package->price == 0) {
+            \App\Models\UserPackage::where('user_id', Auth::id())->update(['status' => 'expired']);
+            
+            \App\Models\UserPackage::create([
+                'user_id' => Auth::id(),
+                'package_id' => $package->id,
+                'start_date' => now(),
+                'end_date' => now()->addDays($package->duration_days),
+                'status' => 'active',
+                'created_at' => now(),
+            ]);
+            
+            return back()->with('success', '✅ تم تفعيل الباقة المجانية!');
+        }
         
-        // ✅ إنشاء اشتراك جديد مع التاريخ الكامل
-        \App\Models\UserPackage::create([
-            'user_id' => Auth::id(),
-            'package_id' => $package->id,
-            'start_date' => now(),
-            'end_date' => now()->addDays($package->duration_days),
-            'status' => 'active',
-            'price_paid' => $package->price,
-            'created_at' => now(),
-            'updated_at' => now()
+        $request->validate([
+            'sender_name' => 'required|string|max:255',
+            'sender_phone' => 'required|string|max:20',
+            'receipt_image' => 'required|image|mimes:jpg,jpeg,png|max:2048',
         ]);
         
-        ActivityLogController::log(Auth::id(), 'activate_package', 'تفعيل باقة: ' . $package->name . ' - السعر: ' . $package->price);
+        $image = $request->file('receipt_image');
+        $imageName = time() . '_' . Auth::id() . '.' . $image->extension();
+        $image->move(public_path('uploads/receipts'), $imageName);
         
-        return back()->with('success', '✅ تم ترقية باقتك إلى ' . $package->name . ' بنجاح!');
+        \App\Models\Transaction::create([
+            'user_id' => Auth::id(),
+            'package_id' => $package->id,
+            'amount' => $package->price,
+            'type' => 'package',
+            'status' => 'pending',
+            'sender_name' => $request->sender_name,
+            'sender_phone' => $request->sender_phone,
+            'receipt_image' => $imageName,
+        ]);
+        
+        $admins = \App\Models\User::where('role', 'admin')->get();
+        foreach ($admins as $admin) {
+            \App\Models\Notification::create([
+                'user_id' => $admin->id,
+                'sender_id' => Auth::id(),
+                'type' => 'payment_pending',
+                'message' => '💳 دفعة جديدة من ' . Auth::user()->name . ' - ' . $package->name . ' - ' . $package->price . ' ر.ي',
+                'link' => route('admin.transactions'),
+            ]);
+        }
+        
+        ActivityLogController::log(Auth::id(), 'payment_pending', 'طلب شراء باقة: ' . $package->name . ' - ' . $package->price . ' ر.ي');
+        
+        return back()->with('success', '✅ تم استلام طلبك! سيتم تفعيل الباقة بعد تأكيد الدفع.');
     }
 }

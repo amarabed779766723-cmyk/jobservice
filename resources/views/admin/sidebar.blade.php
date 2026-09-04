@@ -1,24 +1,39 @@
 <aside class="admin-sidebar">
-    <div class="admin-sidebar-logo" style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; padding: 1.5rem; border-bottom: 1px solid var(--border);">
-        <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #2563eb, #1d4ed8); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </div>
-        <span style="font-size: 1.3rem; font-weight: 900; color: var(--primary);">Job Service</span>
+    <div class="admin-sidebar-logo" style="display: flex; align-items: center; justify-content: center; padding: 1.5rem; border-bottom: 1px solid var(--border);">
+        <a href="{{ route('admin.dashboard') }}" style="display:flex; align-items:center; gap:0.5rem; text-decoration:none;">
+           <img src="{{ asset('assets/branding/logo-full.png') }}" alt="JOB SERVICE" class="branding-logo sidebar">
+                
     </div>
 
-    <div style="padding: 0.75rem; overflow-y: auto; height: calc(100vh - 180px);">
+    <div style="padding: 0.5rem; overflow-y: auto; height: calc(100vh - 270px);">
         {{-- الرئيسية --}}
-        <a href="{{ route('admin.dashboard') }}" class="{{ request()->is('admin/dashboard') ? 'active' : '' }}" style="border-right: 3px solid #2563EB; {{ request()->is('admin/dashboard') ? '' : 'border-right-color: transparent;' }}">
-            <div class="sidebar-icon-box" style="background: #EFF6FF;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        <a href="{{ route('admin.dashboard') }}" class="{{ request()->is('admin/dashboard') ? 'active' : '' }}" style="border-right: 3px solid #1E2A4A; {{ request()->is('admin/dashboard') ? '' : 'border-right-color: transparent;' }}">
+            <div class="sidebar-icon-box" style="background: #E8ECF4;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1E2A4A" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
             </div>
             الرئيسية
         </a>
 
+        {{-- المعاملات المالية --}}
+        <a href="{{ route('admin.transactions') }}" class="{{ request()->is('admin/transactions') ? 'active' : '' }}" style="border-right: 3px solid #C9A24B; {{ request()->is('admin/transactions') ? '' : 'border-right-color: transparent;' }}">
+            <div class="sidebar-icon-box" style="background: #FDF6E9;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#C9A24B" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+            </div>
+            المعاملات المالية
+        </a>
+
+        {{-- توثيق المستخدمين --}}
+        <a href="{{ route('admin.verifications') }}" class="{{ request()->is('admin/verifications') ? 'active' : '' }}" style="border-right: 3px solid #14B8A6; {{ request()->is('admin/verifications') ? '' : 'border-right-color: transparent;' }}">
+            <div class="sidebar-icon-box" style="background: #F0FDFA;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#14B8A6" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+            </div>
+            توثيق المستخدمين
+        </a>
+
         {{-- المستخدمون --}}
-        <a href="{{ route('admin.users') }}" class="{{ request()->is('admin/users') ? 'active' : '' }}" style="border-right: 3px solid #8B5CF6; {{ request()->is('admin/users') ? '' : 'border-right-color: transparent;' }}">
-            <div class="sidebar-icon-box" style="background: #F5F3FF;">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8B5CF6" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <a href="{{ route('admin.users') }}" class="{{ request()->is('admin/users') ? 'active' : '' }}" style="border-right: 3px solid #5A6B8A; {{ request()->is('admin/users') ? '' : 'border-right-color: transparent;' }}">
+            <div class="sidebar-icon-box" style="background: #F5F7FA;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#5A6B8A" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
             </div>
             المستخدمون
         </a>
@@ -86,14 +101,12 @@
             </div>
             الإعلانات
         </a>
-    </div>
 
-    <div style="padding: 0.75rem; border-top: 1px solid var(--border);">
-        <form method="POST" action="{{ route('admin.logout') }}">
+        {{-- تسجيل الخروج --}}
+        <form method="POST" action="{{ route('admin.logout') }}" style="margin-top: 0.5rem;">
             @csrf
             <button type="submit" class="sidebar-logout-btn">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                تسجيل خروج
+                🚪 تسجيل خروج
             </button>
         </form>
     </div>
