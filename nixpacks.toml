@@ -1,0 +1,8 @@
+[providers]
+php = "8.1"
+
+[phases.setup]
+nixPkgs = ["php81", "php81Packages.composer", "nodejs_18", "nginx"]
+
+[phases.build]
+cmds = ["composer install --ignore-platform-reqs --no-dev", "php artisan migrate --force"]
