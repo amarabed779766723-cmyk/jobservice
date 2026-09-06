@@ -17,7 +17,14 @@ class WalletSetting extends Model
         'is_active',
     ];
     
+    // ✅ تغيير: ترجع كل المحافظ النشطة
     public static function getActive()
+    {
+        return self::where('is_active', 1)->get();
+    }
+    
+    // ✅ إضافة: ترجع أول محفظة (للتوافق مع الكود القديم)
+    public static function getFirstActive()
     {
         return self::where('is_active', 1)->first();
     }

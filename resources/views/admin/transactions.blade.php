@@ -35,6 +35,7 @@
                         <th>المستخدم</th>
                         <th>الباقة</th>
                         <th>المبلغ</th>
+                        <th>المحفظة</th>
                         <th>اسم الدافع</th>
                         <th>رقم الجوال</th>
                         <th>صورة التحويل</th>
@@ -51,8 +52,17 @@
                             <strong>{{ $transaction->user->name ?? 'مستخدم' }}</strong><br>
                             <small>{{ $transaction->user->email ?? '' }}</small>
                         </td>
-                        <td>{{ $transaction->package->name ?? '-' }}</td>
+                        <td>{{ $transaction->package->name ?? ($transaction->type === 'ad' ? 'إعلان' : '-') }}</td>
                         <td><strong>{{ number_format($transaction->amount, 2) }} ر.س</strong></td>
+                        <td>
+                            @if($transaction->wallet_name)
+                                <span style="background:#eff6ff; color:#1e40af; padding:0.25rem 0.5rem; border-radius:2rem; font-size:0.75rem;">
+                                    📱 {{ $transaction->wallet_name }}
+                                </span>
+                            @else
+                                -
+                            @endif
+                        </td>
                         <td>{{ $transaction->sender_name ?? '-' }}</td>
                         <td>{{ $transaction->sender_phone ?? '-' }}</td>
                         <td>

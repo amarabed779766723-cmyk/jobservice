@@ -23,7 +23,7 @@ class ServiceController extends Controller
     
     public function store(Request $request)
     {
-        // تفتيش الباقة
+        // ✅ تفتيش الباقة
         $activePackage = \App\Models\UserPackage::where('user_id', auth()->id())
             ->where('status', 'active')
             ->first();
@@ -34,10 +34,14 @@ class ServiceController extends Controller
         }
 
         $package = \App\Models\Package::find($activePackage->package_id);
-        $currentServices = Service::where('provider_id', auth()->id())->count();
+        
+        // ✅ حساب الخدمات من بداية تفعيل الباقة الحالية
+        $currentServices = Service::where('provider_id', auth()->id())
+            ->where('created_at', '>=', $activePackage->start_date)
+            ->count();
 
         if ($package->max_services !== null && $currentServices >= $package->max_services) {
-            return back()->with('error', '⚠️ لقد وصلت للحد الأقصى (' . $package->max_services . ' خدمات) في باقتك "' . $package->name . '". <a href="' . route('packages') . '" style="color:#2563eb; font-weight:700;">ترقية إلى باقة أعلى</a>');
+            return back()->with('error', '⚠️ لقد استهلكت كل ما لديك من خدمات (' . $package->max_services . ' خدمات) في باقتك "' . $package->name . '". إذا أردت خدمة إضافية، <a href="' . route('packages') . '" style="color:#2563eb; font-weight:700;">فعّل باقة أعلى</a>');
         }
         
         $request->validate([
@@ -50,7 +54,6 @@ class ServiceController extends Controller
             'image' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
         ]);
         
-        // ✅ رفع الصورة
         $imageName = 'service-default.png';
         if ($request->hasFile('image')) {
             $image = $request->file('image');

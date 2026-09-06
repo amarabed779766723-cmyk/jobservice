@@ -1015,3 +1015,99 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
 });
+// ==================== المحافظ الإلكترونية ====================
+
+function selectWallet(element, radioInput) {
+    document.querySelectorAll('.wallet-card, .wallet-select-item').forEach(function(item) {
+        item.classList.remove('selected');
+    });
+    if (element) element.classList.add('selected');
+    if (radioInput) radioInput.checked = true;
+}
+
+function initWalletCards() {
+    document.querySelectorAll('.wallet-card').forEach(function(card) {
+        card.addEventListener('click', function() {
+            var radio = card.querySelector('input[type="radio"]');
+            if (radio) selectWallet(card, radio);
+        });
+    });
+    document.querySelectorAll('.wallet-select-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+            var radio = item.querySelector('input[type="radio"]');
+            if (radio) selectWallet(item, radio);
+        });
+    });
+    document.querySelectorAll('input[name="wallet_name"]').forEach(function(radio) {
+        radio.addEventListener('change', function() {
+            var parent = radio.closest('.wallet-card, .wallet-select-item');
+            if (parent) selectWallet(parent, radio);
+        });
+    });
+}
+
+// التحقق من الاسم الرباعي
+function validateFullName(input) {
+    var value = input.value.trim();
+    var words = value.split(/\s+/).filter(function(word) { return word.length > 1; });
+    var errorMsg = input.closest('.sender-input-group').querySelector('.sender-error-msg');
+    if (words.length < 3) {
+        input.classList.add('error');
+        if (errorMsg) {
+            errorMsg.textContent = '⚠️ يرجى كتابة الاسم الرباعي كاملاً (3 كلمات على الأقل)';
+            errorMsg.classList.add('show');
+        }
+        return false;
+    } else {
+        input.classList.remove('error');
+        if (errorMsg) errorMsg.classList.remove('show');
+        return true;
+    }
+}
+
+// التحقق من رقم الجوال
+function validatePhone(input) {
+    var value = input.value.trim();
+    var errorMsg = input.closest('.sender-input-group').querySelector('.sender-error-msg');
+    if (value.length < 9 || !/^[0-9+\s]+$/.test(value)) {
+        input.classList.add('error');
+        if (errorMsg) {
+            errorMsg.textContent = '⚠️ يرجى كتابة رقم الجوال صحيح';
+            errorMsg.classList.add('show');
+        }
+        return false;
+    } else {
+        input.classList.remove('error');
+        if (errorMsg) errorMsg.classList.remove('show');
+        return true;
+    }
+}
+
+// التحقق قبل الإرسال
+function validatePaymentForm(form) {
+    var nameInput = form.querySelector('input[name="sender_name"]');
+    var phoneInput = form.querySelector('input[name="sender_phone"]');
+    if (!nameInput || !phoneInput) return true;
+    var validName = validateFullName(nameInput);
+    var validPhone = validatePhone(phoneInput);
+    return validName && validPhone;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    initWalletCards();
+    
+    // ربط التحقق بالنماذج
+    document.querySelectorAll('input[name="sender_name"]').forEach(function(input) {
+        input.addEventListener('blur', function() { validateFullName(input); });
+        input.addEventListener('input', function() {
+            if (input.classList.contains('error')) validateFullName(input);
+        });
+    });
+    
+    document.querySelectorAll('input[name="sender_phone"]').forEach(function(input) {
+        input.addEventListener('blur', function() { validatePhone(input); });
+        input.addEventListener('input', function() {
+            if (input.classList.contains('error')) validatePhone(input);
+        });
+    });
+});

@@ -16,40 +16,45 @@ class RequestController extends Controller
     }
     
     public function store(Request $request)
-{
-    $activePackage = \App\Models\UserPackage::where('user_id', auth()->id())
-        ->where('status', 'active')
-        ->first();
+    {
+        // ✅ تفتيش الباقة
+        $activePackage = \App\Models\UserPackage::where('user_id', auth()->id())
+            ->where('status', 'active')
+            ->first();
 
-    if (!$activePackage || \Carbon\Carbon::parse($activePackage->end_date)->isPast()) {
-        if ($activePackage) $activePackage->update(['status' => 'expired']);
-        return back()->with('error', '⚠️ باقتك منتهية. <a href="' . route('packages') . '" style="color:#2563eb; font-weight:700;">ترقية الباقة</a>');
+        if (!$activePackage || \Carbon\Carbon::parse($activePackage->end_date)->isPast()) {
+            if ($activePackage) $activePackage->update(['status' => 'expired']);
+            return back()->with('error', '⚠️ باقتك منتهية. <a href="' . route('packages') . '" style="color:#2563eb; font-weight:700;">ترقية الباقة</a>');
+        }
+
+        $package = \App\Models\Package::find($activePackage->package_id);
+        
+        // ✅ حساب الطلبات من بداية تفعيل الباقة الحالية
+        $currentRequests = ServiceRequest::where('user_id', auth()->id())
+            ->where('created_at', '>=', $activePackage->start_date)
+            ->count();
+
+        if ($package->max_requests !== null && $currentRequests >= $package->max_requests) {
+            return back()->with('error', '⚠️ لقد استهلكت كل ما لديك من طلبات (' . $package->max_requests . ' طلبات) في باقتك "' . $package->name . '". إذا أردت طلباً إضافياً، <a href="' . route('packages') . '" style="color:#2563eb; font-weight:700;">فعّل باقة أعلى</a>');
+        }
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'budget' => 'required|numeric|min:1',
+        ]);
+        
+        ServiceRequest::create([
+            'user_id' => auth()->id(),
+            'title' => $request->title,
+            'description' => $request->description,
+            'budget' => $request->budget,
+        ]);
+
+        ActivityLogController::log(auth()->id(), 'create_request', 'إنشاء طلب خدمة');
+        ActivityLogController::notifyAdmin(auth()->user()->name . ' نشر طلب خدمة: ' . $request->title, route('admin.reports'));
+        
+        return redirect()->route('home')->with('success', '✅ تم نشر الطلب بنجاح!');
     }
-
-    $package = \App\Models\Package::find($activePackage->package_id);
-    $currentRequests = ServiceRequest::where('user_id', auth()->id())->count();
-
-    if ($package->max_requests !== null && $currentRequests >= $package->max_requests) {
-        return back()->with('error', '⚠️ لقد وصلت للحد الأقصى (' . $package->max_requests . ' طلبات) في باقتك "' . $package->name . '". <a href="' . route('packages') . '" style="color:#2563eb; font-weight:700;">ترقية إلى باقة أعلى</a>');
-    }
-
-    $request->validate([
-        'title' => 'required|string|max:255',
-        'budget' => 'required|numeric|min:1',
-    ]);
-    
-    ServiceRequest::create([
-        'user_id' => auth()->id(),
-        'title' => $request->title,
-        'description' => $request->description,
-        'budget' => $request->budget,
-    ]);
-
-    ActivityLogController::log(auth()->id(), 'create_request', 'إنشاء طلب خدمة');
-    ActivityLogController::notifyAdmin(auth()->user()->name . ' نشر طلب خدمة: ' . $request->title, route('admin.reports'));
-    
-    return redirect()->route('home')->with('success', '✅ تم نشر الطلب بنجاح!');
-}
     
     public function index()
     {
@@ -120,7 +125,6 @@ class RequestController extends Controller
         return back()->with('success', 'تم قبول العرض!');
     }
     
-    // ✅ إكمال الطلب فقط - بدون تقييم
     public function completeAndRate(Request $request, $id)
     {
         $serviceRequest = ServiceRequest::findOrFail($id);

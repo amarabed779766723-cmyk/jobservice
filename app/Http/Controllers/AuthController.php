@@ -205,58 +205,60 @@ class AuthController extends Controller
     }
 
     public function activatePackage(Request $request)
-    {
-        $package = \App\Models\Package::findOrFail($request->package_id);
+{
+    $package = \App\Models\Package::findOrFail($request->package_id);
+    
+    if ($package->price == 0) {
+        \App\Models\UserPackage::where('user_id', Auth::id())->update(['status' => 'expired']);
         
-        if ($package->price == 0) {
-            \App\Models\UserPackage::where('user_id', Auth::id())->update(['status' => 'expired']);
-            
-            \App\Models\UserPackage::create([
-                'user_id' => Auth::id(),
-                'package_id' => $package->id,
-                'start_date' => now(),
-                'end_date' => now()->addDays($package->duration_days),
-                'status' => 'active',
-                'created_at' => now(),
-            ]);
-            
-            return back()->with('success', '✅ تم تفعيل الباقة المجانية!');
-        }
-        
-        $request->validate([
-            'sender_name' => 'required|string|max:255',
-            'sender_phone' => 'required|string|max:20',
-            'receipt_image' => 'required|image|mimes:jpg,jpeg,png|max:2048',
-        ]);
-        
-        $image = $request->file('receipt_image');
-        $imageName = time() . '_' . Auth::id() . '.' . $image->extension();
-        $image->move(public_path('uploads/receipts'), $imageName);
-        
-        \App\Models\Transaction::create([
+        \App\Models\UserPackage::create([
             'user_id' => Auth::id(),
             'package_id' => $package->id,
-            'amount' => $package->price,
-            'type' => 'package',
-            'status' => 'pending',
-            'sender_name' => $request->sender_name,
-            'sender_phone' => $request->sender_phone,
-            'receipt_image' => $imageName,
+            'start_date' => now(),
+            'end_date' => now()->addDays($package->duration_days),
+            'status' => 'active',
+            'created_at' => now(),
         ]);
         
-        $admins = \App\Models\User::where('role', 'admin')->get();
-        foreach ($admins as $admin) {
-            \App\Models\Notification::create([
-                'user_id' => $admin->id,
-                'sender_id' => Auth::id(),
-                'type' => 'payment_pending',
-                'message' => '💳 دفعة جديدة من ' . Auth::user()->name . ' - ' . $package->name . ' - ' . $package->price . ' ر.ي',
-                'link' => route('admin.transactions'),
-            ]);
-        }
-        
-        ActivityLogController::log(Auth::id(), 'payment_pending', 'طلب شراء باقة: ' . $package->name . ' - ' . $package->price . ' ر.ي');
-        
-        return back()->with('success', '✅ تم استلام طلبك! سيتم تفعيل الباقة بعد تأكيد الدفع.');
+        return back()->with('success', '✅ تم تفعيل الباقة المجانية!');
     }
+    
+    $request->validate([
+        'sender_name' => 'required|string|max:255',
+        'sender_phone' => 'required|string|max:20',
+        'receipt_image' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+        'wallet_name' => 'required|string', // ✅ جديد
+    ]);
+    
+    $image = $request->file('receipt_image');
+    $imageName = time() . '_' . Auth::id() . '.' . $image->extension();
+    $image->move(public_path('uploads/receipts'), $imageName);
+    
+    \App\Models\Transaction::create([
+        'user_id' => Auth::id(),
+        'package_id' => $package->id,
+        'amount' => $package->price,
+        'type' => 'package',
+        'status' => 'pending',
+        'sender_name' => $request->sender_name,
+        'sender_phone' => $request->sender_phone,
+        'receipt_image' => $imageName,
+        'wallet_name' => $request->wallet_name, // ✅ جديد
+    ]);
+    
+    $admins = \App\Models\User::where('role', 'admin')->get();
+    foreach ($admins as $admin) {
+        \App\Models\Notification::create([
+            'user_id' => $admin->id,
+            'sender_id' => Auth::id(),
+            'type' => 'payment_pending',
+            'message' => '💳 دفعة جديدة من ' . Auth::user()->name . ' - ' . $package->name . ' - ' . $package->price . ' ر.ي - عبر ' . $request->wallet_name,
+            'link' => route('admin.transactions'),
+        ]);
+    }
+    
+    ActivityLogController::log(Auth::id(), 'payment_pending', 'طلب شراء باقة: ' . $package->name . ' - ' . $package->price . ' ر.ي - عبر ' . $request->wallet_name);
+    
+    return back()->with('success', '✅ تم استلام طلبك! سيتم تفعيل الباقة بعد تأكيد الدفع.');
+}
 }
